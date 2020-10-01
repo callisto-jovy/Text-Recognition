@@ -1,5 +1,6 @@
 package ga.abzzezz;
 
+import com.fazecast.jSerialComm.SerialPort;
 import ga.abzzezz.rotation.RotationHandler;
 import ga.abzzezz.serial.SerialHandler;
 import ga.abzzezz.util.FileUtil;
@@ -24,6 +25,20 @@ public class MainClass extends Application {
      */
     public static void main(final String[] args) {
         OpenCV.loadShared();
+        final File file = new File(System.getProperty("user.home"), "Save.SAVE");
+        if (file.exists()) {
+            final JSONObject jsonObject = new JSONObject(FileUtil.getFileContentsAsString(file));
+            /* Read from file */
+            final int rotX = jsonObject.getInt("rotX");
+            final int rotY = jsonObject.getInt("rotY");
+            final int port = jsonObject.getInt("port");
+
+            RotationHandler.INSTANCE.setX(rotX);
+            RotationHandler.INSTANCE.setY(rotY);
+            SerialHandler.INSTANCE.setIndex(port);
+            SerialHandler.INSTANCE.setPort(SerialPort.getCommPorts()[port]);
+
+        }
         launch(args);
     }
 
@@ -44,6 +59,7 @@ public class MainClass extends Application {
             jsonObject.put("rotX", RotationHandler.INSTANCE.getX()).put("rotY", RotationHandler.INSTANCE.getY()).put("port", SerialHandler.INSTANCE.getIndex());
             FileUtil.writeStringToFile(new File(System.getProperty("user.home"), "Save.SAVE"), jsonObject.toString(), false);
             running = false;
+            System.exit(0);
         });
         primaryStage.show();
         running = true;

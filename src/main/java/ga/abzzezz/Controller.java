@@ -3,14 +3,12 @@ package ga.abzzezz;
 import com.fazecast.jSerialComm.SerialPort;
 import ga.abzzezz.rotation.RotationHandler;
 import ga.abzzezz.serial.SerialHandler;
-import ga.abzzezz.util.FileUtil;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import net.sourceforge.tess4j.Tesseract;
-import org.json.JSONObject;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -19,7 +17,6 @@ import org.opencv.videoio.VideoCapture;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 
 /**
  * Standard javafx controller class. Only handles the sliders for now.
@@ -46,7 +43,6 @@ public class Controller {
     @FXML
     private ListView<String> foundText;
 
-
     private boolean capture;
     private final VideoCapture videoCapture = new VideoCapture();
     private final Tesseract tesseract = new Tesseract();
@@ -57,18 +53,12 @@ public class Controller {
     @FXML
     public void initialize() {
         portComboBox.getItems().addAll(SerialPort.getCommPorts());
-        final File file = new File(System.getProperty("user.home"), "Save.SAVE");
-        if (file.exists()) {
-            final JSONObject jsonObject = new JSONObject(FileUtil.getFileContentsAsString(file));
-            /* Read from file */
-            RotationHandler.INSTANCE.setX(jsonObject.getInt("rotX"));
-            RotationHandler.INSTANCE.setY(jsonObject.getInt("rotY"));
-            setDisable(SerialHandler.INSTANCE.setPort(SerialPort.getCommPorts()[jsonObject.getInt("port")]));
-            /* UI Components */
-            xAxisSlider.setValue(RotationHandler.INSTANCE.getX());
-            yAxisSlider.setValue(RotationHandler.INSTANCE.getY());
-            portComboBox.setValue(SerialHandler.INSTANCE.getSerialPort());
-        }
+        setDisable(SerialHandler.INSTANCE.getSerialPort().isOpen());
+        /* UI Components */
+        xAxisSlider.setValue(RotationHandler.INSTANCE.getX());
+        yAxisSlider.setValue(RotationHandler.INSTANCE.getY());
+        portComboBox.setValue(SerialHandler.INSTANCE.getSerialPort());
+        /* Tess4J */
         tesseract.setDatapath("tessdata");
         tesseract.setLanguage("lets");
         tesseract.setTessVariable("user_defined_dpi", "300");

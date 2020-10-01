@@ -54,7 +54,6 @@ public class FileUtil {
         }
         try (final BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(fileOut, append))) {
             bufferedWriter.write(string);
-            bufferedWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

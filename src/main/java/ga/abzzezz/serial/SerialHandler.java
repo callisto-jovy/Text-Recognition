@@ -1,6 +1,8 @@
 package ga.abzzezz.serial;
 
 import com.fazecast.jSerialComm.SerialPort;
+import com.fazecast.jSerialComm.SerialPortEvent;
+import com.fazecast.jSerialComm.SerialPortMessageListener;
 import ga.abzzezz.rotation.RotationHandler;
 
 import java.io.IOException;
@@ -22,8 +24,10 @@ public class SerialHandler {
      * Separator char to split String
      */
     final String separator = ":";
-    private SerialPort serialPort;
+
     private int index;
+
+    private SerialPort serialPort;
 
     /**
      * Set port
@@ -32,11 +36,32 @@ public class SerialHandler {
      * @return is port opened?
      */
     public boolean setPort(final SerialPort newPort) {
-        if(this.serialPort != null && this.serialPort.isOpen()) this.serialPort.closePort();
+        if (this.serialPort != null && this.serialPort.isOpen()) this.serialPort.closePort();
 
         this.serialPort = newPort;
         this.serialPort.setComPortParameters(9600, 8, 1, 0);
-        this.serialPort.setComPortTimeouts(SerialPort.TIMEOUT_WRITE_BLOCKING, 0, 0);
+        this.serialPort.setComPortTimeouts(SerialPort.TIMEOUT_NONBLOCKING, 0, 0);
+        this.serialPort.addDataListener(new SerialPortMessageListener() {
+            @Override
+            public byte[] getMessageDelimiter() {
+                return "\n".getBytes();
+            }
+
+            @Override
+            public boolean delimiterIndicatesEndOfMessage() {
+                return true;
+            }
+
+            @Override
+            public int getListeningEvents() {
+                return SerialPort.LISTENING_EVENT_DATA_RECEIVED;
+            }
+
+            @Override
+            public void serialEvent(SerialPortEvent serialPortEvent) {
+                System.out.println(new String(serialPortEvent.getReceivedData()));
+            }
+        });
 
         if (this.serialPort.openPort())
             Logger.getAnonymousLogger().log(Level.INFO, "Serial port\"" + this.serialPort.getDescriptivePortName() + "\" is now opened");
@@ -44,10 +69,9 @@ public class SerialHandler {
             Logger.getAnonymousLogger().log(Level.WARNING, "Serial port couldn't be opened");
             return false;
         }
+       // IntStream.range(0, SerialPort.getCommPorts().length).filter(value -> SerialPort.getCommPorts()[value].equals(this.serialPort)).findAny().ifPresent(value -> index = value);
         changeXAxis(RotationHandler.INSTANCE.getX());
         changeYAxis(RotationHandler.INSTANCE.getY());
-
-        IntStream.range(0, SerialPort.getCommPorts().length).filter(value -> SerialPort.getCommPorts()[value].equals(this.serialPort)).findAny().ifPresent(value -> index = value);
         return true;
     }
 
@@ -116,11 +140,6 @@ public class SerialHandler {
         return index;
     }
 
-    /**
-     * Set index
-     *
-     * @param index integer to set to
-     */
     public void setIndex(int index) {
         this.index = index;
     }
