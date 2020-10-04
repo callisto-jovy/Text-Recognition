@@ -3,19 +3,17 @@ package ga.abzzezz.serial;
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import com.fazecast.jSerialComm.SerialPortMessageListener;
+import ga.abzzezz.Main;
 import ga.abzzezz.rotation.RotationHandler;
 
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 
 /**
  * Class to handle the serial connection between App and port (COM4)
  */
 public class SerialHandler {
-
-    public static final SerialHandler INSTANCE = new SerialHandler();
     /**
      * End line char to indicate String done
      */
@@ -25,7 +23,7 @@ public class SerialHandler {
      */
     final String separator = ":";
 
-    private int index;
+    private int index = -1;
 
     private SerialPort serialPort;
 
@@ -69,9 +67,9 @@ public class SerialHandler {
             Logger.getAnonymousLogger().log(Level.WARNING, "Serial port couldn't be opened");
             return false;
         }
-       // IntStream.range(0, SerialPort.getCommPorts().length).filter(value -> SerialPort.getCommPorts()[value].equals(this.serialPort)).findAny().ifPresent(value -> index = value);
-        changeXAxis(RotationHandler.INSTANCE.getX());
-        changeYAxis(RotationHandler.INSTANCE.getY());
+        // IntStream.range(0, SerialPort.getCommPorts().length).filter(value -> SerialPort.getCommPorts()[value].equals(this.serialPort)).findAny().ifPresent(value -> index = value);
+        changeXAxis(Main.INSTANCE.getRotationHandler().getX());
+        changeYAxis(Main.INSTANCE.getRotationHandler().getY());
         return true;
     }
 
@@ -83,9 +81,9 @@ public class SerialHandler {
     public int changeXAxis(int amount) {
         if (amount > 180) amount = 180;
         if (!getSerialPort().isOpen())
-            return RotationHandler.INSTANCE.getX();
+            return Main.INSTANCE.getRotationHandler().getX();
         try {
-            getSerialPort().getOutputStream().write(format('X', RotationHandler.INSTANCE.setX(amount)));
+            getSerialPort().getOutputStream().write(format('X', Main.INSTANCE.getRotationHandler().setX(amount)));
             getSerialPort().getOutputStream().flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -101,9 +99,9 @@ public class SerialHandler {
     public int changeYAxis(int amount) {
         if (amount > 180) amount = 180;
         if (!getSerialPort().isOpen())
-            return RotationHandler.INSTANCE.getY();
+            return Main.INSTANCE.getRotationHandler().getY();
         try {
-            getSerialPort().getOutputStream().write(format('Y', RotationHandler.INSTANCE.setY(amount)));
+            getSerialPort().getOutputStream().write(format('Y', Main.INSTANCE.getRotationHandler().setY(amount)));
             getSerialPort().getOutputStream().flush();
         } catch (IOException e) {
             e.printStackTrace();
@@ -140,7 +138,7 @@ public class SerialHandler {
         return index;
     }
 
-    public void setIndex(int index) {
+    public void setIndex(final int index) {
         this.index = index;
     }
 }

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+
 <TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ga.abzzezz.Controller">
     <tabs>
         <Tab text="Controls">
@@ -31,6 +32,15 @@
                         <ImageView fx:id="image" fitWidth="486.0" preserveRatio="true" smooth="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="114.0" AnchorPane.topAnchor="0.0" />
                   <ListView fx:id="foundText" editable="true" layoutX="496.0" layoutY="45.0" prefHeight="324.0" prefWidth="106.0" AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="47.0" />
                     </children>
+                </AnchorPane>
+            </content>
+        </Tab>
+        <Tab text="Settings">
+            <content>
+                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <CheckBox fx:id="logResultsToFile" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#changeLogFile" text="Log results to file" />
+               </children>
                 </AnchorPane>
             </content>
         </Tab>

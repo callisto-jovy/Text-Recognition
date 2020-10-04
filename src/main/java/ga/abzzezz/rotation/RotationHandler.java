@@ -5,10 +5,6 @@ package ga.abzzezz.rotation;
  */
 public class RotationHandler {
     /**
-     * Simple instance
-     */
-    public static final RotationHandler INSTANCE = new RotationHandler();
-    /**
      * Integer array containing the servo's current rotation set by the application.
      * 0 : x
      * 1 : y
