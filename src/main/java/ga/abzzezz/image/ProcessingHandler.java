@@ -1,7 +1,6 @@
 package ga.abzzezz.image;
 
 import ga.abzzezz.Main;
-import ga.abzzezz.serial.SerialHandler;
 import ga.abzzezz.util.FileUtil;
 import ga.abzzezz.util.SettingsHolder;
 import javafx.scene.control.ListView;
@@ -56,12 +55,14 @@ public class ProcessingHandler {
      * @param foundText
      */
     public void start(final ImageView imageView, final ListView<String> foundText) {
-        videoCapture.open(0);
+        videoCapture.open(1);
         executorService.submit(new Thread(() -> {
             while (videoCapture.isOpened() && videoCapture.read(videoMat)) {
                 final MatOfByte processedByteMat = new MatOfByte();
                 final Mat grayMat = new Mat();
-                Imgproc.cvtColor(videoMat, grayMat, Imgproc.COLOR_RGB2GRAY, 0);
+                Imgproc.cvtColor(videoMat, grayMat, Imgproc.COLOR_BGR2GRAY, 0);
+                Imgproc.threshold(grayMat, grayMat, 200, 255, Imgproc.THRESH_BINARY);
+                //    Imgproc.blur(grayMat, grayMat, new Size(5, 5));
                 Imgcodecs.imencode(".jpg", grayMat, processedByteMat);
                 final byte[] bytes = processedByteMat.toArray();
                 imageView.setImage(new Image(new ByteArrayInputStream(bytes)));
@@ -83,7 +84,8 @@ public class ProcessingHandler {
         try {
             final String tessGuess = tesseract.doOCR(image);
             if (!tessGuess.isEmpty()) {
-                if(SettingsHolder.logResultsToFile) FileUtil.writeStringToFile(Main.INSTANCE.getProcessedFile(), tessGuess, true);
+                if (SettingsHolder.logResultsToFile)
+                    FileUtil.writeStringToFile(Main.INSTANCE.getProcessedFile(), tessGuess, true);
                 return tessGuess;
             }
         } catch (final TesseractException e) {

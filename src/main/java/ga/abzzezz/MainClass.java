@@ -5,7 +5,7 @@ import nu.pattern.OpenCV;
 public class MainClass {
 
     public static void main(final String[] args) {
-        OpenCV.loadShared();
+        OpenCV.loadLocally();
         Main.INSTANCE.setup(args);
     }
 }

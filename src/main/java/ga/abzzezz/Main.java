@@ -11,14 +11,15 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import nu.pattern.OpenCV;
 import org.json.JSONObject;
 
 import java.io.File;
 
 public class Main extends Application {
 
-    /** Basic instance **/
+    /**
+     * Basic instance
+     **/
     public static final Main INSTANCE = new Main();
 
     /* Handlers */
@@ -53,8 +54,8 @@ public class Main extends Application {
             getRotationHandler().setX(rotX);
             getRotationHandler().setY(rotY);
             getSerialHandler().setIndex(port);
-            if(port != -1)
-            getSerialHandler().setPort(SerialPort.getCommPorts()[port]);
+            if (port != -1)
+                getSerialHandler().setPort(SerialPort.getCommPorts()[port]);
             SettingsHolder.logResultsToFile = jsonObject.getBoolean("logResultsToFile");
         }
         launch(mainArgs);
