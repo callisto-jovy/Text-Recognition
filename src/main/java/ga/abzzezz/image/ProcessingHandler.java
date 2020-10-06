@@ -61,7 +61,7 @@ public class ProcessingHandler {
                 final MatOfByte processedByteMat = new MatOfByte();
                 final Mat grayMat = new Mat();
                 Imgproc.cvtColor(videoMat, grayMat, Imgproc.COLOR_BGR2GRAY, 0);
-                Imgproc.threshold(grayMat, grayMat, 200, 255, Imgproc.THRESH_BINARY);
+                Imgproc.Canny(grayMat, grayMat, 30, 200);
                 //    Imgproc.blur(grayMat, grayMat, new Size(5, 5));
                 Imgcodecs.imencode(".jpg", grayMat, processedByteMat);
                 final byte[] bytes = processedByteMat.toArray();
