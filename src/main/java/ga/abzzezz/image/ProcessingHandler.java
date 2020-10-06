@@ -44,7 +44,7 @@ public class ProcessingHandler {
 
     public ProcessingHandler() {
         tesseract.setDatapath("tessdata");
-        tesseract.setLanguage("lets");
+        tesseract.setLanguage("ssd");
         tesseract.setTessVariable("user_defined_dpi", "300");
     }
 
@@ -80,7 +80,6 @@ public class ProcessingHandler {
         final BufferedImage image = new BufferedImage(grayMat.width(), grayMat.height(), BufferedImage.TYPE_BYTE_GRAY);
         final byte[] data = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
         grayMat.get(0, 0, data);
-
         try {
             final String tessGuess = tesseract.doOCR(image);
             if (!tessGuess.isEmpty()) {
