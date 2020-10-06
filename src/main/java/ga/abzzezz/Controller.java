@@ -7,7 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 
 /**
- * Standard javafx controller class. Only handles the sliders for now.
+ * Standard javafx controller class.
  */
 public class Controller {
     @FXML
@@ -32,6 +32,10 @@ public class Controller {
     private ListView<String> foundText;
     @FXML
     private CheckBox logResultsToFile;
+    @FXML
+    private TextField threshold1;
+    @FXML
+    private TextField threshold2;
 
     private boolean capture;
 
@@ -41,11 +45,13 @@ public class Controller {
     @FXML
     public void initialize() {
         portComboBox.getItems().addAll(SerialPort.getCommPorts());
-    //    setDisable(Main.INSTANCE.getSerialHandler().getSerialPort().isOpen());
+        //    setDisable(Main.INSTANCE.getSerialHandler().getSerialPort().isOpen());
         /* UI Components */
         xAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getX());
         yAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getY());
         portComboBox.setValue(Main.INSTANCE.getSerialHandler().getSerialPort());
+        threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
+        threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
 
         logResultsToFile.setSelected(SettingsHolder.logResultsToFile);
     }
@@ -126,4 +132,14 @@ public class Controller {
         SettingsHolder.logResultsToFile = logResultsToFile.isSelected();
     }
 
+
+    @FXML
+    public void changeThreshold1() {
+        Main.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1.getText()));
+    }
+
+    @FXML
+    public void changeThreshold2() {
+        Main.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2.getText()));
+    }
 }

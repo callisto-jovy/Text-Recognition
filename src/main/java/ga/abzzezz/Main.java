@@ -1,6 +1,7 @@
 package ga.abzzezz;
 
 import com.fazecast.jSerialComm.SerialPort;
+import ga.abzzezz.file.FileHandler;
 import ga.abzzezz.image.ProcessingHandler;
 import ga.abzzezz.rotation.RotationHandler;
 import ga.abzzezz.serial.SerialHandler;
@@ -37,6 +38,10 @@ public class Main extends Application {
      **/
     private final ProcessingHandler processingHandler = new ProcessingHandler();
     /**
+     * Handler for saving and reading settings
+     */
+    private final FileHandler fileHandler = new FileHandler();
+    /**
      * File for main directory
      **/
     private final File mainDir = new File(System.getProperty("user.home"), "App");
@@ -57,6 +62,8 @@ public class Main extends Application {
             if (port != -1)
                 getSerialHandler().setPort(SerialPort.getCommPorts()[port]);
             SettingsHolder.logResultsToFile = jsonObject.getBoolean("logResultsToFile");
+            getProcessingHandler().setThreshold1(jsonObject.getDouble("threshold1"));
+            getProcessingHandler().setThreshold2(jsonObject.getDouble("threshold2"));
         }
         launch(mainArgs);
     }
@@ -74,11 +81,7 @@ public class Main extends Application {
         primaryStage.setResizable(false);
         primaryStage.setScene(new Scene(root, 600, 400));
         primaryStage.setOnCloseRequest(windowEvent -> {
-            final JSONObject jsonObject = new JSONObject();
-            jsonObject.put("rotX", getRotationHandler().getX()).put("rotY", getRotationHandler().getY()).put("port", getSerialHandler().getIndex());
-            jsonObject.put("logResultsToFile", SettingsHolder.logResultsToFile);
-            FileUtil.writeStringToFile(savedFile, jsonObject.toString(), false);
-
+            getFileHandler().storeSettings();
             getProcessingHandler().stop();
             System.exit(0);
         });
@@ -109,5 +112,9 @@ public class Main extends Application {
 
     public File getProcessedFile() {
         return processedFile;
+    }
+
+    public FileHandler getFileHandler() {
+        return fileHandler;
     }
 }

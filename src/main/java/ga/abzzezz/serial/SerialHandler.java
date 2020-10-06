@@ -4,7 +4,6 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import com.fazecast.jSerialComm.SerialPortMessageListener;
 import ga.abzzezz.Main;
-import ga.abzzezz.rotation.RotationHandler;
 
 import java.io.IOException;
 import java.util.logging.Level;

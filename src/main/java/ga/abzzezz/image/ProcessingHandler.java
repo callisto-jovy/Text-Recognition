@@ -41,6 +41,10 @@ public class ProcessingHandler {
      * Service for video thread
      **/
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    /**
+     * Custom thresholds
+     */
+    private final double[] thresholds = new double[2];
 
     public ProcessingHandler() {
         tesseract.setDatapath("tessdata");
@@ -61,7 +65,7 @@ public class ProcessingHandler {
                 final MatOfByte processedByteMat = new MatOfByte();
                 final Mat grayMat = new Mat();
                 Imgproc.cvtColor(videoMat, grayMat, Imgproc.COLOR_BGR2GRAY, 0);
-                Imgproc.Canny(grayMat, grayMat, 30, 200);
+                Imgproc.Canny(grayMat, grayMat, getThresholds()[0], getThresholds()[1]);
                 //    Imgproc.blur(grayMat, grayMat, new Size(5, 5));
                 Imgcodecs.imencode(".jpg", grayMat, processedByteMat);
                 final byte[] bytes = processedByteMat.toArray();
@@ -113,5 +117,25 @@ public class ProcessingHandler {
 
     public VideoCapture getVideoCapture() {
         return videoCapture;
+    }
+
+    public double[] getThresholds() {
+        return thresholds;
+    }
+
+    private double clamp(final double value, final double min, final double max) {
+        return value > max ? max : Math.max(value, min);
+    }
+
+    public double setThreshold1(double value) {
+        value = clamp(value, 0, 255);
+        getThresholds()[0] = value;
+        return value;
+    }
+
+    public double setThreshold2(double value) {
+        value = clamp(value, 0, 255);
+        getThresholds()[1] = value;
+        return value;
     }
 }
