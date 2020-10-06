@@ -54,7 +54,7 @@ public class ProcessingHandler {
 
     /**
      * Start the video capture, run thread and process image.
-     *
+     * TODO: certain rect processing
      * @param imageView
      * @param foundText
      */

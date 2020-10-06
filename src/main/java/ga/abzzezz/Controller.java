@@ -135,11 +135,11 @@ public class Controller {
 
     @FXML
     public void changeThreshold1() {
-        Main.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1.getText()));
+        threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1.getText()))));
     }
 
     @FXML
     public void changeThreshold2() {
-        Main.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2.getText()));
+        threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2.getText()))));
     }
 }
