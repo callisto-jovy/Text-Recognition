@@ -77,7 +77,6 @@ public class ProcessingHandler {
         executorService.submit(new Thread(() -> {
             while (videoCapture.isOpened() && videoCapture.read(videoMat)) {
                 final MatOfByte processedByteMat = new MatOfByte();
-
                 Rect rect = new Rect();
                 for (final Point[] point : Main.INSTANCE.getVertexHandler().getPoints()) {
                     Imgproc.rectangle(videoMat, new Rect(point[0], point[2]), new Scalar(0, 255, 0), 2);
@@ -86,7 +85,6 @@ public class ProcessingHandler {
 
                 final Mat copyMat = new Mat(videoMat, rect);
 
-
                 Imgproc.cvtColor(copyMat, copyMat, Imgproc.COLOR_BGR2GRAY, 0);
                 Imgproc.Canny(copyMat, copyMat, getThresholds()[0], getThresholds()[1]);
 
@@ -94,7 +92,7 @@ public class ProcessingHandler {
                 final byte[] bytes = processedByteMat.toArray();
                 imageView.setImage(new Image(new ByteArrayInputStream(bytes)));
 
-                doOCR(copyMat);
+                System.out.println(doOCR(copyMat));
 
                 processedByteMat.release();
                 copyMat.release();
