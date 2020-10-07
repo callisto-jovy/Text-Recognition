@@ -50,9 +50,7 @@ public class MainController {
     @FXML
     public void initialize() {
         portComboBox.getItems().addAll(SerialPort.getCommPorts());
-        Main.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> {
-            setEnabled(serialPort.isOpen());
-        });
+        Main.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> setEnabled(serialPort.isOpen()));
         /* UI Components */
         xAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getX());
         yAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getY());

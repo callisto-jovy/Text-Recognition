@@ -33,9 +33,9 @@ public class ConfigCreatorController {
     /**
      * List of all rectangles with their points
      */
-    private final List<Point[]> points = new ArrayList<>();
-    private final Point[] localPoints = new Point[4];
-    private final Polygon polygon = new Polygon();
+    private final List<Polygon> polygons = new ArrayList<>();
+    private Polygon polygon;
+
     @FXML
     public ImageView imageView;
     @FXML
@@ -57,26 +57,26 @@ public class ConfigCreatorController {
         threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
         threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
 
-        polygon.setFill(Color.TRANSPARENT);
-        polygon.setStroke(Color.GREEN);
-        polygon.setStrokeWidth(4);
-        pane.getChildren().add(polygon);
-
         imageView.setOnMouseClicked(mouseEvent -> {
-            //final Image image = imageView.getImage();
             final double xPos = mouseEvent.getX(), yPos = mouseEvent.getY();
+            if (pointIndex == 0) {
+                polygon = new Polygon();
+                polygon.setFill(Color.TRANSPARENT);
+                polygon.setStroke(Color.GREEN);
+                polygon.setStrokeWidth(4);
+                pane.getChildren().add(polygon);
+            }
 
             if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-                localPoints[pointIndex] = new Point(xPos, yPos);
                 polygon.getPoints().addAll(xPos, yPos);
                 pointIndex++;
             } else if (mouseEvent.getButton() == MouseButton.SECONDARY) {
-                localPoints[pointIndex] = null;
+                if (polygon.getPoints().size() > 0)
+                    polygon.getPoints().remove(polygon.getPoints().size() - 1);
             }
 
             if (pointIndex >= 4) {
-                this.points.add(localPoints.clone());
-                polygon.getPoints().clear();
+                polygons.add(polygon);
                 pointIndex = 0;
                 QuickLog.log("Stored last four points", QuickLog.LogType.INFO);
             }
@@ -90,9 +90,13 @@ public class ConfigCreatorController {
     public void onCapture() {
         capture = !capture;
         startCapture.setText(capture ? "Stop Capture" : "Start capture");
-        if (capture)
+        if (capture) {
+            if (!polygons.isEmpty()) {
+                Main.INSTANCE.getVertexHandler().getPoints().addAll(movePolygons(true));
+            }
+            imageView.setImage(null);
             Main.INSTANCE.getProcessingHandler().start(imageView);
-        else {
+        } else {
             Main.INSTANCE.getProcessingHandler().stop();
             imageView.setImage(null);
         }
@@ -111,7 +115,7 @@ public class ConfigCreatorController {
      */
     @FXML
     public void saveConfig() {
-        Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(JOptionPane.showInputDialog("Config name"), points));
+        Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(JOptionPane.showInputDialog("Config name"), movePolygons(false)));
     }
 
     /**
@@ -120,9 +124,26 @@ public class ConfigCreatorController {
     @FXML
     public void loadConfig() {
         final Config[] configs = Main.INSTANCE.getConfigHandler().getConfigs().stream().filter(config -> config.getMode() == ConfigHandler.IMAGE_VERTEX_MODE).toArray(Config[]::new);
+        //TODO: Add list selection
         final String strings = Arrays.stream(configs).map(Config::getName).collect(Collectors.joining("\n"));
-        final int index = Integer.parseInt(JOptionPane.showInputDialog(null, strings + "Choose from 0 - " + configs.length));
-        Main.INSTANCE.getConfigHandler().loadConfig(configs[index]);
+        final String response = JOptionPane.showInputDialog(null, strings + "\nChoose from 0 - " + (configs.length - 1));
+        if (response != null && !response.isEmpty()) {
+            final int index = Integer.parseInt(response);
+            Main.INSTANCE.getConfigHandler().loadConfig(configs[index]);
+            polygons.clear();
+            pane.getChildren().removeIf(node -> node.getClass().equals(Polygon.class));
+
+            Main.INSTANCE.getVertexHandler().getPoints().forEach(pointArray -> {
+                final Polygon polygon = new Polygon();
+                polygon.setFill(Color.TRANSPARENT);
+                polygon.setStroke(Color.GREEN);
+                polygon.setStrokeWidth(4);
+                for (final Point point : pointArray) {
+                    polygon.getPoints().addAll(point.x, point.y);
+                }
+                pane.getChildren().add(polygon);
+            });
+        }
     }
 
     /**
@@ -143,9 +164,9 @@ public class ConfigCreatorController {
 
     @FXML
     public void clearPoints() {
-        polygon.getPoints().clear();
-        Arrays.fill(localPoints, null);
-        points.clear();
+        polygons.clear();
+        pane.getChildren().removeIf(node -> node.getClass().equals(Polygon.class));
+        Main.INSTANCE.getVertexHandler().getPoints().clear();
     }
 
     /**
@@ -154,6 +175,19 @@ public class ConfigCreatorController {
     @FXML
     public void onBack() {
         //TODO: Go back
+    }
+
+    private List<Point[]> movePolygons(final boolean deleteOld) {
+        final List<Point[]> points = new ArrayList<>();
+        for (final Polygon iterPolygon : polygons) {
+            final Point[] polygonPoints = new Point[4];
+            for (int i = 1; i < iterPolygon.getPoints().size(); i += 2) {
+                polygonPoints[i / 2] = new Point(iterPolygon.getPoints().get(i - 1), iterPolygon.getPoints().get(i));
+            }
+            points.add(polygonPoints);
+        }
+        if (deleteOld) polygons.clear();
+        return points;
     }
 
 }

@@ -17,8 +17,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
+import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
@@ -57,7 +56,7 @@ public class ProcessingHandler {
     /**
      * Camera index (integrated webcam usually no. 0)
      */
-    private final int camIndex = 1;
+    private final int camIndex = 0;
 
     public ProcessingHandler() {
         QuickLog.log("Loading tesseract", QuickLog.LogType.INFO);
@@ -78,9 +77,19 @@ public class ProcessingHandler {
         executorService.submit(new Thread(() -> {
             while (videoCapture.isOpened() && videoCapture.read(videoMat)) {
                 final MatOfByte processedByteMat = new MatOfByte();
-                final Mat copyMat = new Mat();
-                Imgproc.cvtColor(videoMat, copyMat, Imgproc.COLOR_BGR2GRAY, 0);
+
+                Rect rect = new Rect();
+                for (final Point[] point : Main.INSTANCE.getVertexHandler().getPoints()) {
+                    Imgproc.rectangle(videoMat, new Rect(point[0], point[2]), new Scalar(0, 255, 0), 2);
+                    rect = new Rect(point[0], point[2]);
+                }
+
+                final Mat copyMat = new Mat(videoMat, rect);
+
+
+                Imgproc.cvtColor(copyMat, copyMat, Imgproc.COLOR_BGR2GRAY, 0);
                 Imgproc.Canny(copyMat, copyMat, getThresholds()[0], getThresholds()[1]);
+
                 Imgcodecs.imencode(".jpg", copyMat, processedByteMat);
                 final byte[] bytes = processedByteMat.toArray();
                 imageView.setImage(new Image(new ByteArrayInputStream(bytes)));
@@ -115,11 +124,12 @@ public class ProcessingHandler {
             processedByteMat.release();
             copyMat.release();
             videoMat.release();
+            stop();
         }));
     }
 
     /**
-     * Do tesseract OCR. Convert mat to bufferedimage fist
+     * Do tesseract OCR. Convert mat to buffered-image fist
      *
      * @param mat Mat to be converted and searched
      * @return Found string
@@ -166,12 +176,24 @@ public class ProcessingHandler {
         return thresholds;
     }
 
+    /**
+     * Set the current threshold 1 to a given value. Given value is clamped between 0 & 255
+     *
+     * @param value value to set to
+     * @return value
+     */
     public double setThreshold1(double value) {
         value = MathUtil.clamp(value, 0, 255);
         getThresholds()[0] = value;
         return value;
     }
 
+    /**
+     * Set the current threshold 2 to a given value. Given value is clamped between 0 & 255
+     *
+     * @param value value to set to
+     * @return value
+     */
     public double setThreshold2(double value) {
         value = MathUtil.clamp(value, 0, 255);
         getThresholds()[1] = value;

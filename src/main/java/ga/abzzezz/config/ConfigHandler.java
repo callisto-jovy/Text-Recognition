@@ -91,6 +91,10 @@ public class ConfigHandler {
         return createConfig(name, IMAGE_VERTEX_MODE, struct);
     }
 
+    /**
+     * Load config, dependent on it's id
+     * @param config config to be loaded
+     */
     public void loadConfig(final Config config) {
         switch (config.getMode()) {
             case SERVO_MODE:
@@ -117,23 +121,46 @@ public class ConfigHandler {
         }
     }
 
+    /**
+     * Read string, convert to JSON etc. then retrieve information & return config
+     * @param lines data in
+     * @return config from retrieved information
+     */
     public Config readConfig(final String lines) {
         final JSONObject jsonObject = new JSONObject(lines);
         final JSONObject metaData = jsonObject.getJSONObject("meta");
         return new Config(metaData.getString("name"), metaData.getInt("mode"), jsonObject.getJSONArray("struct"));
     }
 
+    /**
+     * Create config based on parameters
+     * @param name config name
+     * @param mode config mode for decoding
+     * @param struct json array to be iterated upon
+     * @return built config
+     */
     private Config createConfig(final String name, final int mode, final JSONArray struct) {
         return new Config(name, mode, struct);
     }
 
+    /**
+     * Convert config to JSON and to string
+     * @param config Config to be parsed
+     * @return JSON string
+     */
     private String writeConfig(final Config config) {
         return new JSONObject().put("meta", new JSONObject().put("name", config.getName()).put("mode", config.getMode())).put("struct", config.getContent()).toString();
     }
 
+    /**
+     * Save config in the config directory with a random uuid
+     * @param config config to be saved
+     */
     public void saveConfig(final Config config) {
+        QuickLog.log("Config to file", QuickLog.LogType.SAVING);
         final File configFile = new File(Main.INSTANCE.getConfigDir(), UUID.randomUUID().toString() + ".config");
         FileUtil.writeStringToFile(configFile, writeConfig(config), false);
+        QuickLog.log("Config saved", QuickLog.LogType.INFO);
     }
 
     public List<Config> getConfigs() {

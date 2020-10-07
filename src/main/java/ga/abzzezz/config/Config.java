@@ -31,6 +31,10 @@ public class Config {
         this.content = content;
     }
 
+    /**
+     * Get a json array with all the contents
+     * @return JSON array
+     */
     public JSONArray getContent() {
         return content;
     }
