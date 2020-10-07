@@ -26,5 +26,6 @@
       <Button layoutX="533.0" layoutY="109.0" mnemonicParsing="false" onAction="#changeThreshold2" text="Submit" AnchorPane.rightAnchor="13.0" />
       <Button layoutX="14.0" layoutY="361.0" mnemonicParsing="false" onAction="#saveConfig" text="Save config" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0" />
       <Button layoutX="500.0" layoutY="286.0" mnemonicParsing="false" onAction="#clearPoints" text="Clear" AnchorPane.bottomAnchor="89.0" AnchorPane.rightAnchor="57.0" />
+      <Button layoutX="99.0" layoutY="361.0" mnemonicParsing="false" onAction="#loadConfig" text="Load config" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="99.0" />
    </children>
 </AnchorPane>

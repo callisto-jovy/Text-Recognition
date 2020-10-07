@@ -17,6 +17,7 @@ import ga.abzzezz.serial.SerialHandler;
 import ga.abzzezz.util.FileUtil;
 import ga.abzzezz.util.QuickLog;
 import ga.abzzezz.util.SettingsHolder;
+import ga.abzzezz.vertex.VertexHandler;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -62,7 +63,16 @@ public class Main extends Application {
      * Handler to read and apply configs
      */
     private final ConfigHandler configHandler = new ConfigHandler();
+    /**
+     * Handler to store and manipulate the current rect vertices
+     */
+    private final VertexHandler vertexHandler = new VertexHandler();
 
+    /**
+     * Setup method, load settings and launch ap
+     *
+     * @param mainArgs java arguments passed on from the main method
+     */
     public void setup(final String[] mainArgs) {
         if (!mainDir.exists()) mainDir.mkdirs();
         if (!configDir.exists()) configDir.mkdir();
@@ -83,6 +93,7 @@ public class Main extends Application {
             getProcessingHandler().setThreshold1(jsonObject.getDouble("threshold1"));
             getProcessingHandler().setThreshold2(jsonObject.getDouble("threshold2"));
         }
+        getConfigHandler().loadConfigs();
         // getConfigHandler().saveConfig(getConfigHandler().createServoConfig("servotest1", getRotationHandler().getCurrentRotations()));
         launch(mainArgs);
     }
@@ -144,5 +155,9 @@ public class Main extends Application {
 
     public File getConfigDir() {
         return configDir;
+    }
+
+    public VertexHandler getVertexHandler() {
+        return vertexHandler;
     }
 }

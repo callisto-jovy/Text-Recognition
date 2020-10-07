@@ -9,6 +9,8 @@
 package ga.abzzezz.controllers;
 
 import ga.abzzezz.Main;
+import ga.abzzezz.config.Config;
+import ga.abzzezz.config.ConfigHandler;
 import ga.abzzezz.util.QuickLog;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -24,9 +26,16 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ConfigCreatorController {
 
+    /**
+     * List of all rectangles with their points
+     */
+    private final List<Point[]> points = new ArrayList<>();
+    private final Point[] localPoints = new Point[4];
+    private final Polygon polygon = new Polygon();
     @FXML
     public ImageView imageView;
     @FXML
@@ -41,13 +50,7 @@ public class ConfigCreatorController {
      * Capture started indicator
      */
     private boolean capture;
-    /**
-     * List of all rectangles with their points
-     */
-    private final List<Point[]> points = new ArrayList<>();
-    private final Point[] localPoints = new Point[4];
-    private final Polygon polygon = new Polygon();
-    private int i;
+    private int pointIndex;
 
     @FXML
     public void initialize() {
@@ -64,28 +67,19 @@ public class ConfigCreatorController {
             final double xPos = mouseEvent.getX(), yPos = mouseEvent.getY();
 
             if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-                localPoints[i] = new Point(xPos, yPos);
+                localPoints[pointIndex] = new Point(xPos, yPos);
                 polygon.getPoints().addAll(xPos, yPos);
-                i++;
+                pointIndex++;
             } else if (mouseEvent.getButton() == MouseButton.SECONDARY) {
-                localPoints[i] = null;
+                localPoints[pointIndex] = null;
             }
 
-            if (i >= 4) {
+            if (pointIndex >= 4) {
                 this.points.add(localPoints.clone());
                 polygon.getPoints().clear();
-
-                i = 0;
+                pointIndex = 0;
                 QuickLog.log("Stored last four points", QuickLog.LogType.INFO);
             }
-/*
-            // Draw Points
-            final WritableImage wi = new WritableImage(image.getPixelReader(), (int) image.getWidth(), (int) image.getHeight());
-            final PixelWriter pw = wi.getPixelWriter();
-            pw.setColor(xPos, yPos, new Color(0, 1, 0, 1));
-            imageView.setImage(wi);
-
- */
         });
     }
 
@@ -112,9 +106,23 @@ public class ConfigCreatorController {
         Main.INSTANCE.getProcessingHandler().takeImage(imageView);
     }
 
+    /**
+     * Save config
+     */
     @FXML
     public void saveConfig() {
         Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(JOptionPane.showInputDialog("Config name"), points));
+    }
+
+    /**
+     * Load config
+     */
+    @FXML
+    public void loadConfig() {
+        final Config[] configs = Main.INSTANCE.getConfigHandler().getConfigs().stream().filter(config -> config.getMode() == ConfigHandler.IMAGE_VERTEX_MODE).toArray(Config[]::new);
+        final String strings = Arrays.stream(configs).map(Config::getName).collect(Collectors.joining("\n"));
+        final int index = Integer.parseInt(JOptionPane.showInputDialog(null, strings + "Choose from 0 - " + configs.length));
+        Main.INSTANCE.getConfigHandler().loadConfig(configs[index]);
     }
 
     /**
