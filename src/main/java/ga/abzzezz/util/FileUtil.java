@@ -1,3 +1,11 @@
+/*
+ * Created by Roman P.  (2020)
+ *
+ *
+ *
+ *
+ */
+
 package ga.abzzezz.util;
 
 import java.io.*;
@@ -48,13 +56,13 @@ public class FileUtil {
         if (!fileOut.exists()) {
             try {
                 fileOut.createNewFile();
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 e.printStackTrace();
             }
         }
         try (final BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(fileOut, append))) {
             bufferedWriter.write(string);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }

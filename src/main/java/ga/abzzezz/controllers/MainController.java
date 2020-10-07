@@ -1,17 +1,32 @@
-package ga.abzzezz;
+/*
+ * Created by Roman P.  (2020)
+ *
+ *
+ *
+ *
+ */
+
+package ga.abzzezz.controllers;
 
 import com.fazecast.jSerialComm.SerialPort;
+import ga.abzzezz.Main;
+import ga.abzzezz.util.QuickLog;
 import ga.abzzezz.util.SettingsHolder;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
 
 /**
  * Standard javafx controller class.
  */
-public class Controller {
-    @FXML
-    public ImageView image;
+public class MainController {
+
     @FXML
     private Slider xAxisSlider;
     @FXML
@@ -27,17 +42,8 @@ public class Controller {
     @FXML
     private ComboBox<SerialPort> portComboBox;
     @FXML
-    private Button startCapture;
-    @FXML
-    private ListView<String> foundText;
-    @FXML
     private CheckBox logResultsToFile;
-    @FXML
-    private TextField threshold1;
-    @FXML
-    private TextField threshold2;
 
-    private boolean capture;
 
     /**
      * Method adds items and restores saves
@@ -45,27 +51,16 @@ public class Controller {
     @FXML
     public void initialize() {
         portComboBox.getItems().addAll(SerialPort.getCommPorts());
-        //    setDisable(Main.INSTANCE.getSerialHandler().getSerialPort().isOpen());
+        Main.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> {
+            setEnabled(serialPort.isOpen());
+        });
         /* UI Components */
         xAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getX());
         yAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getY());
-        portComboBox.setValue(Main.INSTANCE.getSerialHandler().getSerialPort());
-        threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
-        threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
+
+        Main.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> portComboBox.setValue(serialPort));
 
         logResultsToFile.setSelected(SettingsHolder.logResultsToFile);
-    }
-
-    @FXML
-    public void onCaptureStarted() {
-        capture = !capture;
-        startCapture.setText(capture ? "Stop Capture" : "Start capture");
-        if (capture)
-            Main.INSTANCE.getProcessingHandler().start(image, foundText);
-        else {
-            Main.INSTANCE.getProcessingHandler().stop();
-            image.setImage(null);
-        }
     }
 
     /**
@@ -73,13 +68,13 @@ public class Controller {
      */
     @FXML
     public void onPortSelected() {
-        setDisable(Main.INSTANCE.getSerialHandler().setPort(portComboBox.getValue()));
+        setEnabled(Main.INSTANCE.getSerialHandler().setPort(portComboBox.getValue()));
     }
 
     /**
      * @param state state to set components disabled
      */
-    private void setDisable(boolean state) {
+    private void setEnabled(boolean state) {
         state = !state;
         xAxisSubmit.setDisable(state);
         yAxisSubmit.setDisable(state);
@@ -125,21 +120,24 @@ public class Controller {
         yAxisSlider.setValue(value);
     }
 
+    @FXML
+    public void onTabViewChanged(final ActionEvent event) {
+        try {
+            final Parent configs = FXMLLoader.load(getClass().getResource("/configcreator.fxml"));
+            final Scene scene = new Scene(configs, 1280, 800);
+            final Stage appStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            appStage.setScene(scene);
+            appStage.show();
+        } catch (final Exception e) {
+            QuickLog.log("Switching scene", QuickLog.LogType.ERROR);
+            e.printStackTrace();
+        }
+    }
+
     /* Settings */
 
     @FXML
     public void changeLogFile() {
         SettingsHolder.logResultsToFile = logResultsToFile.isSelected();
-    }
-
-
-    @FXML
-    public void changeThreshold1() {
-        threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1.getText()))));
-    }
-
-    @FXML
-    public void changeThreshold2() {
-        threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2.getText()))));
     }
 }

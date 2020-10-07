@@ -1,11 +1,21 @@
+/*
+ * Created by Roman P.  (2020)
+ *
+ *
+ *
+ *
+ */
+
 package ga.abzzezz;
 
 import com.fazecast.jSerialComm.SerialPort;
+import ga.abzzezz.config.ConfigHandler;
 import ga.abzzezz.file.FileHandler;
 import ga.abzzezz.image.ProcessingHandler;
 import ga.abzzezz.rotation.RotationHandler;
 import ga.abzzezz.serial.SerialHandler;
 import ga.abzzezz.util.FileUtil;
+import ga.abzzezz.util.QuickLog;
 import ga.abzzezz.util.SettingsHolder;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -23,6 +33,13 @@ public class Main extends Application {
      **/
     public static final Main INSTANCE = new Main();
 
+    /**
+     * File for main directory
+     **/
+    private final File mainDir = new File(System.getProperty("user.home"), "App");
+    private final File savedFile = new File(mainDir, "saved_data.txt");
+    private final File processedFile = new File(mainDir, "processed_strings.txt");
+    private final File configDir = new File(mainDir, "CFG");
     /* Handlers */
 
     /**
@@ -42,15 +59,15 @@ public class Main extends Application {
      */
     private final FileHandler fileHandler = new FileHandler();
     /**
-     * File for main directory
-     **/
-    private final File mainDir = new File(System.getProperty("user.home"), "App");
-    private final File savedFile = new File(mainDir, "saved_data.txt");
-    private final File processedFile = new File(mainDir, "processed_strings.txt");
+     * Handler to read and apply configs
+     */
+    private final ConfigHandler configHandler = new ConfigHandler();
 
     public void setup(final String[] mainArgs) {
         if (!mainDir.exists()) mainDir.mkdirs();
+        if (!configDir.exists()) configDir.mkdir();
         if (savedFile.exists()) {
+            QuickLog.log("From settings file", QuickLog.LogType.READING);
             final JSONObject jsonObject = new JSONObject(FileUtil.getFileContentsAsString(savedFile));
             /* Read from file */
             final int rotX = jsonObject.getInt("rotX");
@@ -59,12 +76,14 @@ public class Main extends Application {
             getRotationHandler().setX(rotX);
             getRotationHandler().setY(rotY);
             getSerialHandler().setIndex(port);
-            if (port != -1)
+            if (port > SerialPort.getCommPorts().length)
                 getSerialHandler().setPort(SerialPort.getCommPorts()[port]);
+
             SettingsHolder.logResultsToFile = jsonObject.getBoolean("logResultsToFile");
             getProcessingHandler().setThreshold1(jsonObject.getDouble("threshold1"));
             getProcessingHandler().setThreshold2(jsonObject.getDouble("threshold2"));
         }
+        // getConfigHandler().saveConfig(getConfigHandler().createServoConfig("servotest1", getRotationHandler().getCurrentRotations()));
         launch(mainArgs);
     }
 
@@ -77,10 +96,11 @@ public class Main extends Application {
     @Override
     public void start(final Stage primaryStage) throws Exception {
         final Parent root = FXMLLoader.load(getClass().getResource("/main.fxml"));
-        primaryStage.setTitle("Text recognition controller");
+        primaryStage.setTitle("LCD ORC Cam controller");
         primaryStage.setResizable(false);
         primaryStage.setScene(new Scene(root, 600, 400));
         primaryStage.setOnCloseRequest(windowEvent -> {
+            QuickLog.log("Shutting down.", QuickLog.LogType.WARNING);
             getFileHandler().storeSettings();
             getProcessingHandler().stop();
             System.exit(0);
@@ -116,5 +136,13 @@ public class Main extends Application {
 
     public FileHandler getFileHandler() {
         return fileHandler;
+    }
+
+    public ConfigHandler getConfigHandler() {
+        return configHandler;
+    }
+
+    public File getConfigDir() {
+        return configDir;
     }
 }

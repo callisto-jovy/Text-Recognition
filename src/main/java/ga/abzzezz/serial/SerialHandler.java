@@ -1,13 +1,23 @@
+/*
+ * Created by Roman P.  (2020)
+ *
+ *
+ *
+ *
+ */
+
 package ga.abzzezz.serial;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import com.fazecast.jSerialComm.SerialPortMessageListener;
 import ga.abzzezz.Main;
+import ga.abzzezz.util.MathUtil;
+import ga.abzzezz.util.QuickLog;
 
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 /**
  * Class to handle the serial connection between App and port (COM4)
@@ -55,18 +65,24 @@ public class SerialHandler {
             }
 
             @Override
-            public void serialEvent(SerialPortEvent serialPortEvent) {
-                System.out.println(new String(serialPortEvent.getReceivedData()));
+            public void serialEvent(final SerialPortEvent serialPortEvent) {
+                QuickLog.log("Received data from serial port: " + new String(serialPortEvent.getReceivedData(), StandardCharsets.UTF_8), QuickLog.LogType.INFO);
             }
         });
 
         if (this.serialPort.openPort())
-            Logger.getAnonymousLogger().log(Level.INFO, "Serial port\"" + this.serialPort.getDescriptivePortName() + "\" is now opened");
+            QuickLog.log("Serial port\"" + this.serialPort.getDescriptivePortName() + "\" is now opened", QuickLog.LogType.INFO);
         else {
-            Logger.getAnonymousLogger().log(Level.WARNING, "Serial port couldn't be opened");
+            QuickLog.log("Serial port couldn't be opened", QuickLog.LogType.WARNING);
             return false;
         }
-        // IntStream.range(0, SerialPort.getCommPorts().length).filter(value -> SerialPort.getCommPorts()[value].equals(this.serialPort)).findAny().ifPresent(value -> index = value);
+
+        for (int i = 0; i < SerialPort.getCommPorts().length; i++) {
+            if (SerialPort.getCommPorts()[i].getDescriptivePortName().equals(serialPort.getDescriptivePortName())) {
+                setIndex(i);
+            }
+        }
+
         changeXAxis(Main.INSTANCE.getRotationHandler().getX());
         changeYAxis(Main.INSTANCE.getRotationHandler().getY());
         return true;
@@ -78,13 +94,28 @@ public class SerialHandler {
      * @param amount amount ton change to
      */
     public int changeXAxis(int amount) {
-        if (amount > 180) amount = 180;
-        if (!getSerialPort().isOpen())
+        if (!serialPort.isOpen())
             return Main.INSTANCE.getRotationHandler().getX();
+
+        final int a = changeAmount(amount, 'X');
+        Main.INSTANCE.getRotationHandler().setX(a);
+        return a;
+    }
+
+    /**
+     * Change a certain axis by a amount
+     *
+     * @param amount amount to change axis by
+     * @param mode   axis
+     * @return amount (clamped if needed)
+     */
+    private int changeAmount(int amount, final char mode) {
+        amount = (int) MathUtil.clamp(amount, 45, 180);
         try {
-            getSerialPort().getOutputStream().write(format('X', Main.INSTANCE.getRotationHandler().setX(amount)));
-            getSerialPort().getOutputStream().flush();
-        } catch (IOException e) {
+            serialPort.getOutputStream().write(format(mode, amount));
+            serialPort.getOutputStream().flush();
+        } catch (final IOException e) {
+            QuickLog.log("Writing to port", QuickLog.LogType.ERROR);
             e.printStackTrace();
         }
         return amount;
@@ -96,16 +127,12 @@ public class SerialHandler {
      * @param amount amount ton change to
      */
     public int changeYAxis(int amount) {
-        if (amount > 180) amount = 180;
-        if (!getSerialPort().isOpen())
+        if (!serialPort.isOpen())
             return Main.INSTANCE.getRotationHandler().getY();
-        try {
-            getSerialPort().getOutputStream().write(format('Y', Main.INSTANCE.getRotationHandler().setY(amount)));
-            getSerialPort().getOutputStream().flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return amount;
+
+        final int a = changeAmount(amount, 'Y');
+        Main.INSTANCE.getRotationHandler().setY(a);
+        return a;
     }
 
     /**
@@ -124,8 +151,8 @@ public class SerialHandler {
      *
      * @return serial port
      */
-    public SerialPort getSerialPort() {
-        return serialPort;
+    public Optional<SerialPort> getSerialPort() {
+        return Optional.ofNullable(serialPort);
     }
 
     /**
