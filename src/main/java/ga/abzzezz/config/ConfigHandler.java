@@ -62,7 +62,8 @@ public class ConfigHandler {
 
     /**
      * Create a config with current servo positions
-     * @param name config name
+     *
+     * @param name      config name
      * @param positions the servo's current position
      * @return auto created config
      */
@@ -74,25 +75,24 @@ public class ConfigHandler {
 
     /**
      * Create a config with the purpose of
+     *
      * @param name config name
-     * @param points list of opencv point arrays, each one representing a rectangle
      * @return auto created config
      */
-    public Config createPointConfig(final String name, final List<Point[]> points) {
+    public Config createPointConfig(final String name) {
         final JSONArray struct = new JSONArray();
-        points.forEach(points1 -> {
-            final JSONArray pointsInArray = new JSONArray();
-            for (final Point point : points1) {
-                final JSONObject pointObject = new JSONObject().put("x", point.x).put("y", point.y);
-                pointsInArray.put(pointObject);
-            }
-            struct.put(pointsInArray);
-        });
+        final JSONArray pointsInArray = new JSONArray();
+        for (final Point point : Main.INSTANCE.getVertexHandler().getPoints()) {
+            final JSONObject pointObject = new JSONObject().put("x", point.x).put("y", point.y);
+            pointsInArray.put(pointObject);
+        }
+        struct.put(pointsInArray);
         return createConfig(name, IMAGE_VERTEX_MODE, struct);
     }
 
     /**
      * Load config, dependent on it's id
+     *
      * @param config config to be loaded
      */
     public void loadConfig(final Config config) {
@@ -104,16 +104,17 @@ public class ConfigHandler {
                     Main.INSTANCE.getSerialHandler().changeYAxis(jsonObject.getInt("y"));
                 }
                 break;
-
             case IMAGE_VERTEX_MODE:
                 for (final Object content : config.getContent()) {
                     final JSONArray pointArray = new JSONArray(content.toString());
-                    final Point[] points = new Point[4];
                     for (int i = 0; i < pointArray.length(); i++) {
                         final JSONObject pointJson = pointArray.getJSONObject(i);
-                        points[i] = new Point(pointJson.getDouble("x"), pointJson.getDouble("y"));
+                        try {
+                            Main.INSTANCE.getVertexHandler().getPoints().set(i, new Point(pointJson.getDouble("x"), pointJson.getDouble("y")));
+                        } catch (final ArrayIndexOutOfBoundsException outOfBoundsException) {
+                            QuickLog.log("More indexes in saved point array than possible", QuickLog.LogType.ERROR);
+                        }
                     }
-                    Main.INSTANCE.getVertexHandler().getPoints().add(points);
                 }
                 break;
             default:
@@ -123,6 +124,7 @@ public class ConfigHandler {
 
     /**
      * Read string, convert to JSON etc. then retrieve information & return config
+     *
      * @param lines data in
      * @return config from retrieved information
      */
@@ -134,8 +136,9 @@ public class ConfigHandler {
 
     /**
      * Create config based on parameters
-     * @param name config name
-     * @param mode config mode for decoding
+     *
+     * @param name   config name
+     * @param mode   config mode for decoding
      * @param struct json array to be iterated upon
      * @return built config
      */
@@ -145,6 +148,7 @@ public class ConfigHandler {
 
     /**
      * Convert config to JSON and to string
+     *
      * @param config Config to be parsed
      * @return JSON string
      */
@@ -154,6 +158,7 @@ public class ConfigHandler {
 
     /**
      * Save config in the config directory with a random uuid
+     *
      * @param config config to be saved
      */
     public void saveConfig(final Config config) {
@@ -161,6 +166,7 @@ public class ConfigHandler {
         final File configFile = new File(Main.INSTANCE.getConfigDir(), UUID.randomUUID().toString() + ".config");
         FileUtil.writeStringToFile(configFile, writeConfig(config), false);
         QuickLog.log("Config saved", QuickLog.LogType.INFO);
+        loadConfigs();
     }
 
     public List<Config> getConfigs() {

@@ -18,14 +18,14 @@ import java.util.List;
  */
 public class VertexHandler {
     /**
-     * List with point-arrays - one representing a whole rectangle
+     * Point list, each one representing one corner
      */
-    private final List<Point[]> points = new ArrayList<>();
+    private final List<Point> points = new ArrayList<>();
 
     /**
-     * @return point array
+     * @return point list
      */
-    public List<Point[]> getPoints() {
+    public List<Point> getPoints() {
         return points;
     }
 }

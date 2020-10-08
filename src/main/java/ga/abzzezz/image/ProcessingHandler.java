@@ -13,18 +13,24 @@ import ga.abzzezz.util.FileUtil;
 import ga.abzzezz.util.MathUtil;
 import ga.abzzezz.util.QuickLog;
 import ga.abzzezz.util.SettingsHolder;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
-import org.opencv.core.*;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfByte;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -44,7 +50,7 @@ public class ProcessingHandler {
     /**
      * mat for the current received image
      **/
-    private final Mat videoMat = new Mat();
+    private final Mat videoMat = new Mat(), imageMap = new Mat();
     /**
      * Service for video thread
      **/
@@ -69,7 +75,7 @@ public class ProcessingHandler {
     /**
      * Start the video capture, run thread and process image.
      *
-     * @param imageView
+     * @param imageView imageView to later display image
      */
     public void start(final ImageView imageView) {
         QuickLog.log("Starting video capture", QuickLog.LogType.INFO);
@@ -77,22 +83,13 @@ public class ProcessingHandler {
         executorService.submit(new Thread(() -> {
             while (videoCapture.isOpened() && videoCapture.read(videoMat)) {
                 final MatOfByte processedByteMat = new MatOfByte();
-                Rect rect = new Rect();
-                for (final Point[] point : Main.INSTANCE.getVertexHandler().getPoints()) {
-                    Imgproc.rectangle(videoMat, new Rect(point[0], point[2]), new Scalar(0, 255, 0), 2);
-                    rect = new Rect(point[0], point[2]);
-                }
-
-                final Mat copyMat = new Mat(videoMat, rect);
-
-                Imgproc.cvtColor(copyMat, copyMat, Imgproc.COLOR_BGR2GRAY, 0);
-                Imgproc.Canny(copyMat, copyMat, getThresholds()[0], getThresholds()[1]);
+                final Mat copyMat = doProcessing(videoMat);
 
                 Imgcodecs.imencode(".jpg", copyMat, processedByteMat);
+
                 final byte[] bytes = processedByteMat.toArray();
                 imageView.setImage(new Image(new ByteArrayInputStream(bytes)));
 
-                System.out.println(doOCR(copyMat));
 
                 processedByteMat.release();
                 copyMat.release();
@@ -111,19 +108,57 @@ public class ProcessingHandler {
         QuickLog.log("Taking image", QuickLog.LogType.INFO);
         videoCapture.open(camIndex);
         executorService.submit(new Thread(() -> {
-            videoCapture.read(videoMat);
+            videoCapture.read(imageMap);
             //TODO: Move to method
             final MatOfByte processedByteMat = new MatOfByte();
-            final Mat copyMat = new Mat();
-            Imgproc.cvtColor(videoMat, copyMat, Imgproc.COLOR_BGR2GRAY, 0);
-            Imgproc.Canny(copyMat, copyMat, getThresholds()[0], getThresholds()[1]);
+            final Mat copyMat = doProcessing(imageMap);
+
             Imgcodecs.imencode(".jpg", copyMat, processedByteMat);
             imageView.setImage(new Image(new ByteArrayInputStream(processedByteMat.toArray())));
+
             processedByteMat.release();
             copyMat.release();
-            videoMat.release();
             stop();
         }));
+    }
+
+    /**
+     * Refresh current image, reapply processing
+     *
+     * @param imageView imageview to display image to
+     */
+    public void refreshProcessing(final ImageView imageView) {
+        final MatOfByte processedByteMat = new MatOfByte();
+        final Mat copyMat = doProcessing(imageMap);
+
+        Imgcodecs.imencode(".jpg", copyMat, processedByteMat);
+        imageView.setImage(new Image(new ByteArrayInputStream(processedByteMat.toArray())));
+
+        processedByteMat.release();
+        copyMat.release();
+    }
+
+    /**
+     * Do image processing with src and dest
+     *
+     * @param src source mat to first apply grayscale to
+     * @return destination (processed)
+     */
+    private Mat doProcessing(final Mat src) {
+        Mat dest = new Mat();
+        if (getRect().isPresent()) {
+            final Rect rect = getRect().get();
+            dest = new Mat(src, rect);
+
+            Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY, 0);
+            Imgproc.rectangle(dest, rect, new Scalar(0, 255, 0), 2);
+            Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
+
+        } else {
+            Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY, 0);
+            Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
+        }
+        return dest;
     }
 
     /**
@@ -136,8 +171,34 @@ public class ProcessingHandler {
         final BufferedImage image = new BufferedImage(mat.width(), mat.height(), BufferedImage.TYPE_BYTE_GRAY);
         final byte[] data = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
         mat.get(0, 0, data);
+        return doOCR(image);
+    }
+
+    /**
+     * Do tesseract OCR on java ofx image
+     *
+     * @param image image to do guess on
+     * @return guess
+     */
+    public String doOCR(final Image image) {
+        return doOCR(SwingFXUtils.fromFXImage(image, new BufferedImage((int) image.getWidth(), (int) image.getHeight(), BufferedImage.TYPE_BYTE_GRAY)));
+    }
+
+    /**
+     * Do Tesseract OCR from BufferedImage
+     *
+     * @param image buffered image
+     * @return tesseract's guess
+     */
+    private String doOCR(final BufferedImage image) {
         try {
-            final String tessGuess = tesseract.doOCR(image);
+            Rectangle rectangle = null;
+            if (getRect().isPresent()) {
+                final Rect rect = getRect().get();
+                rectangle = new Rectangle(getRect().get().x, rect.y, rect.width, rect.height);
+            }
+            final String tessGuess = tesseract.doOCR(image, rectangle);
+            System.out.println("Guess:" + tessGuess);
             if (!tessGuess.isEmpty()) {
                 if (SettingsHolder.logResultsToFile)
                     FileUtil.writeStringToFile(Main.INSTANCE.getProcessedFile(), tessGuess, true);
@@ -170,6 +231,11 @@ public class ProcessingHandler {
         videoMat.release();
     }
 
+    /**
+     * Return both thresholds
+     *
+     * @return double array
+     */
     public double[] getThresholds() {
         return thresholds;
     }
@@ -196,5 +262,11 @@ public class ProcessingHandler {
         value = MathUtil.clamp(value, 0, 255);
         getThresholds()[1] = value;
         return value;
+    }
+
+    private Optional<Rect> getRect() {
+        if (Main.INSTANCE.getVertexHandler().getPoints().size() == 4) {
+            return Optional.of(new Rect(Main.INSTANCE.getVertexHandler().getPoints().get(0), Main.INSTANCE.getVertexHandler().getPoints().get(2)));
+        } else return Optional.empty();
     }
 }
