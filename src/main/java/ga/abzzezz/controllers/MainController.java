@@ -42,6 +42,8 @@ public class MainController {
     private ComboBox<SerialPort> portComboBox;
     @FXML
     private CheckBox logResultsToFile;
+    @FXML
+    private TextField camIndexField;
 
 
     /**
@@ -146,5 +148,10 @@ public class MainController {
     @FXML
     public void changeLogFile() {
         SettingsHolder.logResultsToFile = logResultsToFile.isSelected();
+    }
+
+    @FXML
+    public void setCamIndex() {
+        Main.INSTANCE.getProcessingHandler().setCamIndex(Integer.parseInt(camIndexField.getText()));
     }
 }

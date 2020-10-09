@@ -14,21 +14,16 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfByte;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
+import org.opencv.core.Point;
+import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -61,7 +56,7 @@ public class ProcessingHandler {
     /**
      * Camera index (integrated webcam usually no. 0)
      */
-    private final int camIndex = 1;
+    private int camIndex = 1;
 
     /**
      * Image encoding
@@ -148,8 +143,10 @@ public class ProcessingHandler {
      */
     private Mat doProcessing(final Mat src) {
         Mat dest = new Mat();
-        if (getRect().isPresent()) {
-            final Rect rect = getRect().get();
+        final Optional<int[]> optionalBounds = getRect();
+        if (optionalBounds.isPresent()) {
+            final int[] bounds = optionalBounds.get();
+            final Rect rect = new Rect(bounds[0], bounds[1], bounds[2], bounds[3]);
             dest = new Mat(src, rect);
             Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY, 0);
             Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
@@ -194,12 +191,10 @@ public class ProcessingHandler {
         try {
             Rectangle rectangle = null;
             if (getRect().isPresent()) {
-                final Rect rect = getRect().get();
-                rectangle = new Rectangle(getRect().get().x, rect.y, rect.width, rect.height);
+                final int[] bounds = getRect().get();
+                rectangle = new Rectangle(bounds[0], bounds[1], bounds[3], bounds[4]);
             }
             final String tessGuess = tesseract.doOCR(image, rectangle);
-            ImageIO.write(image, "png", new File(System.getProperty("user.home"), "out.png"));
-
             System.out.println("Guess:" + tessGuess);
             if (!tessGuess.isEmpty()) {
                 if (SettingsHolder.logResultsToFile)
@@ -211,8 +206,6 @@ public class ProcessingHandler {
             QuickLog.log("Doing OCR", QuickLog.LogType.ERROR);
             e.printStackTrace();
             return "";
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return "";
     }
@@ -269,9 +262,28 @@ public class ProcessingHandler {
         return value;
     }
 
-    private Optional<Rect> getRect() {
+    /**
+     * Calculates the bounds for a rectangle from given points (vertex handler)
+     *
+     * @return int array containing x, y, width, height
+     */
+    private Optional<int[]> getRect() {
         if (Main.INSTANCE.getVertexHandler().getPoints().size() == 4) {
-            return Optional.of(new Rect(Main.INSTANCE.getVertexHandler().getPoints().get(0), Main.INSTANCE.getVertexHandler().getPoints().get(2)));
+            final Point p1 = Main.INSTANCE.getVertexHandler().getPoints().get(0);
+            final Point p2 = Main.INSTANCE.getVertexHandler().getPoints().get(2);
+            final int x = (int) (Math.min(p1.x, p2.x));
+            final int y = (int) (Math.min(p1.y, p2.y));
+            final int width = (int) (Math.max(p1.x, p2.x)) - x;
+            final int height = (int) (Math.max(p1.y, p2.y)) - y;
+            return Optional.of(new int[]{x, y, width, height});
         } else return Optional.empty();
+    }
+
+    public void setCamIndex(int camIndex) {
+        this.camIndex = camIndex;
+    }
+
+    public int getCamIndex() {
+        return camIndex;
     }
 }

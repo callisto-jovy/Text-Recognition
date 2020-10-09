@@ -15,10 +15,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.opencv.core.Point;
 
+import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Handler to store current configs, create new ones, etc.
@@ -169,6 +170,29 @@ public class ConfigHandler {
         FileUtil.writeStringToFile(configFile, writeConfig(config), false);
         QuickLog.log("Config saved", QuickLog.LogType.INFO);
         loadConfigs();
+    }
+
+    /**
+     * Shows a input dialog and returns a optional containing the text field's text
+     *
+     * @return Optional of text field's text
+     */
+    public Optional<String> showDialogConfigName() {
+        final String response = JOptionPane.showInputDialog("Config name");
+        return Optional.of(response);
+    }
+
+    /**
+     * Shows a input dialog with all available configs, collected with a predicate
+     * @param predicate predicate to filter
+     * @return user selected config
+     */
+    public Optional<Config> showAvailableConfigs(final Predicate<Config> predicate) {
+        final Config[] configs = Main.INSTANCE.getConfigHandler().getConfigs().stream().filter(predicate).toArray(Config[]::new);
+        //TODO: Add list selection
+        final String strings = Arrays.stream(configs).map(Config::getName).collect(Collectors.joining("\n"));
+        final String response = JOptionPane.showInputDialog(null, strings + "\nChoose from 0 - " + (configs.length - 1));
+        return Optional.of(configs[Integer.parseInt(response)]);
     }
 
     /**

@@ -9,7 +9,6 @@
 package ga.abzzezz.controllers;
 
 import ga.abzzezz.Main;
-import ga.abzzezz.config.Config;
 import ga.abzzezz.config.ConfigHandler;
 import ga.abzzezz.util.QuickLog;
 import javafx.event.ActionEvent;
@@ -29,10 +28,7 @@ import javafx.scene.shape.Polygon;
 import javafx.stage.Stage;
 import org.opencv.core.Point;
 
-import javax.swing.*;
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class ConfigCreatorController {
 
@@ -46,11 +42,11 @@ public class ConfigCreatorController {
     @FXML
     private ImageView imageView;
     @FXML
-    private Button startCapture;
+    private Button startCaptureButton;
     @FXML
-    private TextField threshold1;
+    private TextField threshold1Field;
     @FXML
-    private TextField threshold2;
+    private TextField threshold2Field;
     @FXML
     private AnchorPane pane;
     @FXML
@@ -72,8 +68,8 @@ public class ConfigCreatorController {
      */
     @FXML
     public void initialize() {
-        threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
-        threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
+        threshold1Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
+        threshold2Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
         /* Create polygon and define attributes */
         this.polygon = new Polygon();
         polygon.setFill(Color.TRANSPARENT);
@@ -91,7 +87,6 @@ public class ConfigCreatorController {
             }
 
             if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-                System.out.println("Peppe");
                 polygon.getPoints().addAll(xPos, yPos);
                 Main.INSTANCE.getVertexHandler().addPoint(pointIndex, new Point(xPos, yPos));
                 pointIndex++;
@@ -125,7 +120,7 @@ public class ConfigCreatorController {
     @FXML
     public void onCapture() {
         capture = !capture;
-        startCapture.setText(capture ? "Stop Capture" : "Start capture");
+        startCaptureButton.setText(capture ? "Stop Capture" : "Start capture");
         if (capture) {
             clearPolygon();
             imageView.setImage(null);
@@ -150,9 +145,7 @@ public class ConfigCreatorController {
     @FXML
     public void saveConfig() {
         movePolygons(false);
-        final String response = JOptionPane.showInputDialog("Config name");
-        if (response != null && !response.isEmpty())
-            Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(response));
+        Main.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(s)));
     }
 
     /**
@@ -160,18 +153,13 @@ public class ConfigCreatorController {
      */
     @FXML
     public void loadConfig() {
-        final Config[] configs = Main.INSTANCE.getConfigHandler().getConfigs().stream().filter(config -> config.getMode() == ConfigHandler.IMAGE_VERTEX_MODE).toArray(Config[]::new);
-        //TODO: Add list selection
-        final String strings = Arrays.stream(configs).map(Config::getName).collect(Collectors.joining("\n"));
-        final String response = JOptionPane.showInputDialog(null, strings + "\nChoose from 0 - " + (configs.length - 1));
-        if (response != null && !response.isEmpty()) {
-            final int index = Integer.parseInt(response);
+        Main.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.IMAGE_VERTEX_MODE).ifPresent(response -> {
             clearPoints();
-            Main.INSTANCE.getConfigHandler().loadConfig(configs[index]);
+            Main.INSTANCE.getConfigHandler().loadConfig(response);
             for (final Point point : Main.INSTANCE.getVertexHandler().getPoints()) {
                 polygon.getPoints().addAll(point.x, point.y);
             }
-        }
+        });
     }
 
     /**
@@ -179,7 +167,7 @@ public class ConfigCreatorController {
      */
     @FXML
     public void changeThreshold1() {
-        threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1.getText()))));
+        threshold1Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1Field.getText()))));
     }
 
     /**
@@ -187,7 +175,7 @@ public class ConfigCreatorController {
      */
     @FXML
     public void changeThreshold2() {
-        threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2.getText()))));
+        threshold2Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2Field.getText()))));
     }
 
     @FXML

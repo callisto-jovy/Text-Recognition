@@ -37,7 +37,8 @@ public class SettingsHandler {
                 .put("port", Main.INSTANCE.getSerialHandler().getIndex())
                 .put("logResultsToFile", SettingsHolder.logResultsToFile)
                 .put("threshold1", Main.INSTANCE.getProcessingHandler().getThresholds()[0])
-                .put("threshold2", Main.INSTANCE.getProcessingHandler().getThresholds()[1]);
+                .put("threshold2", Main.INSTANCE.getProcessingHandler().getThresholds()[1])
+                .put("camIndex", Main.INSTANCE.getProcessingHandler().getCamIndex());
         FileUtil.writeStringToFile(Main.INSTANCE.getSavedFile(), jsonObject.toString(), false);
     }
 }

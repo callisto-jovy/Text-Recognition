@@ -103,6 +103,7 @@ public class Main extends Application {
             SettingsHolder.logResultsToFile = jsonObject.getBoolean("logResultsToFile");
             getProcessingHandler().setThreshold1(jsonObject.getDouble("threshold1"));
             getProcessingHandler().setThreshold2(jsonObject.getDouble("threshold2"));
+            getProcessingHandler().setCamIndex(jsonObject.getInt("indexCam"));
         }
         /* Load configs */
         getConfigHandler().loadConfigs();
