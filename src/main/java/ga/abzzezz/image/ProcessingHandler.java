@@ -192,7 +192,7 @@ public class ProcessingHandler {
             Rectangle rectangle = null;
             if (getRect().isPresent()) {
                 final int[] bounds = getRect().get();
-                rectangle = new Rectangle(bounds[0], bounds[1], bounds[3], bounds[4]);
+                rectangle = new Rectangle(bounds[0], bounds[1], bounds[2], bounds[3]);
             }
             final String tessGuess = tesseract.doOCR(image, rectangle);
             System.out.println("Guess:" + tessGuess);

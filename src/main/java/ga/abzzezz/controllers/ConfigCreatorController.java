@@ -208,6 +208,7 @@ public class ConfigCreatorController {
     @FXML
     public void refreshImage() {
         clearPolygon();
+        if(imageView == null || imageView.getImage() == null) return;
         Main.INSTANCE.getProcessingHandler().refreshProcessing(imageView);
     }
 

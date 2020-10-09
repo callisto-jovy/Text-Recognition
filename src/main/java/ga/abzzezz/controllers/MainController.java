@@ -10,6 +10,7 @@ package ga.abzzezz.controllers;
 
 import com.fazecast.jSerialComm.SerialPort;
 import ga.abzzezz.Main;
+import ga.abzzezz.config.ConfigHandler;
 import ga.abzzezz.util.QuickLog;
 import ga.abzzezz.util.SettingsHolder;
 import javafx.event.ActionEvent;
@@ -84,11 +85,13 @@ public class MainController {
     }
 
     @FXML
-    public void saveConfig(ActionEvent event) {
+    public void saveConfig(final ActionEvent event) {
+        Main.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createServoConfig(s, Main.INSTANCE.getRotationHandler().getCurrentRotations())));
     }
 
     @FXML
-    public void loadConfig(ActionEvent event) {
+    public void loadConfig(final ActionEvent event) {
+        Main.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.SERVO_MODE).ifPresent(response -> Main.INSTANCE.getConfigHandler().loadConfig(response));
     }
 
 
