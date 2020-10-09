@@ -53,10 +53,11 @@
   * @since JavaFX 2.2
   */
  public class SwingFXUtils {
+     private static final Set<Object> eventLoopKeys = new HashSet<>();
+     private static volatile int fxPixelsNativeFormat = -1; // initially undefined
+
      private SwingFXUtils() {
      } // no instances
-
-     private static volatile int fxPixelsNativeFormat = -1; // initially undefined
 
      /**
       * Must be called on the FX event thread.
@@ -113,7 +114,7 @@
              if (iw < bw || ih < bh) {
                  wimg = null;
              } else if (bw < iw || bh < ih) {
-                 int empty[] = new int[iw];
+                 int[] empty = new int[iw];
                  PixelWriter pw = wimg.getPixelWriter();
                  PixelFormat<IntBuffer> pf = PixelFormat.getIntArgbPreInstance();
                  if (bw < iw) {
@@ -129,7 +130,7 @@
          }
          PixelWriter pw = wimg.getPixelWriter();
          IntegerComponentRaster icr = (IntegerComponentRaster) bimg.getRaster();
-         int data[] = icr.getDataStorage();
+         int[] data = icr.getDataStorage();
          int offset = icr.getDataOffset(0);
          int scan = icr.getScanlineStride();
          PixelFormat<IntBuffer> pf = (bimg.isAlphaPremultiplied() ?
@@ -326,8 +327,6 @@
          }
      }
 
-     private static final Set<Object> eventLoopKeys = new HashSet<>();
-
      /**
       * The runnable is responsible for leaving the nested event loop.
       */
@@ -355,6 +354,21 @@
          }
 
          eventLoopKeys.remove(nestedLoopKey);
+     }
+
+     private static EventQueue getEventQueue() {
+         return AccessController.doPrivileged(
+                 (PrivilegedAction<EventQueue>) () -> java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue());
+     }
+
+     //Called with reflection from PlatformImpl to avoid dependency
+     private static void installFwEventQueue() {
+         AWTAccessor.getEventQueueAccessor().setFwDispatcher(getEventQueue(), new FXDispatcher());
+     }
+
+     //Called with reflection from PlatformImpl to avoid dependency
+     private static void removeFwEventQueue() {
+         AWTAccessor.getEventQueueAccessor().setFwDispatcher(getEventQueue(), null);
      }
 
      private static class FwSecondaryLoop implements SecondaryLoop {
@@ -399,20 +413,5 @@
          public SecondaryLoop createSecondaryLoop() {
              return new FwSecondaryLoop();
          }
-     }
-
-     private static EventQueue getEventQueue() {
-         return AccessController.doPrivileged(
-                 (PrivilegedAction<EventQueue>) () -> java.awt.Toolkit.getDefaultToolkit().getSystemEventQueue());
-     }
-
-     //Called with reflection from PlatformImpl to avoid dependency
-     private static void installFwEventQueue() {
-         AWTAccessor.getEventQueueAccessor().setFwDispatcher(getEventQueue(), new FXDispatcher());
-     }
-
-     //Called with reflection from PlatformImpl to avoid dependency
-     private static void removeFwEventQueue() {
-         AWTAccessor.getEventQueueAccessor().setFwDispatcher(getEventQueue(), null);
      }
  }

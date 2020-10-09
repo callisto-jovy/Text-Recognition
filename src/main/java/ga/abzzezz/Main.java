@@ -10,10 +10,10 @@ package ga.abzzezz;
 
 import com.fazecast.jSerialComm.SerialPort;
 import ga.abzzezz.config.ConfigHandler;
-import ga.abzzezz.file.FileHandler;
 import ga.abzzezz.image.ProcessingHandler;
 import ga.abzzezz.rotation.RotationHandler;
 import ga.abzzezz.serial.SerialHandler;
+import ga.abzzezz.setting.SettingsHandler;
 import ga.abzzezz.util.FileUtil;
 import ga.abzzezz.util.QuickLog;
 import ga.abzzezz.util.SettingsHolder;
@@ -38,8 +38,17 @@ public class Main extends Application {
      * File for main directory
      **/
     private final File mainDir = new File(System.getProperty("user.home"), "App");
+    /**
+     * File to store quick settings such as last rotations and global settings
+     */
     private final File savedFile = new File(mainDir, "saved_data.txt");
+    /**
+     * File to write OCR strings to
+     */
     private final File processedFile = new File(mainDir, "processed_strings.txt");
+    /**
+     * Directory to save configs to
+     */
     private final File configDir = new File(mainDir, "CFG");
     /* Handlers */
 
@@ -56,10 +65,6 @@ public class Main extends Application {
      **/
     private final ProcessingHandler processingHandler = new ProcessingHandler();
     /**
-     * Handler for saving and reading settings
-     */
-    private final FileHandler fileHandler = new FileHandler();
-    /**
      * Handler to read and apply configs
      */
     private final ConfigHandler configHandler = new ConfigHandler();
@@ -67,15 +72,21 @@ public class Main extends Application {
      * Handler to store and manipulate the current rect vertices
      */
     private final VertexHandler vertexHandler = new VertexHandler();
+    /**
+     * Handler for saving and reading settings
+     */
+    private final SettingsHandler settingsHandler = new SettingsHandler();
 
     /**
-     * Setup method, load settings and launch ap
+     * Setup method, load settings and launch application
      *
      * @param mainArgs java arguments passed on from the main method
      */
     public void setup(final String[] mainArgs) {
+        /* Check if needed directories exist, if they don't create them */
         if (!mainDir.exists()) mainDir.mkdirs();
         if (!configDir.exists()) configDir.mkdir();
+        /* Reload previous settings */
         if (savedFile.exists()) {
             QuickLog.log("From settings file", QuickLog.LogType.READING);
             final JSONObject jsonObject = new JSONObject(FileUtil.getFileContentsAsString(savedFile));
@@ -93,13 +104,14 @@ public class Main extends Application {
             getProcessingHandler().setThreshold1(jsonObject.getDouble("threshold1"));
             getProcessingHandler().setThreshold2(jsonObject.getDouble("threshold2"));
         }
+        /* Load configs */
         getConfigHandler().loadConfigs();
-        // getConfigHandler().saveConfig(getConfigHandler().createServoConfig("servotest1", getRotationHandler().getCurrentRotations()));
+        /* Launch Java FX application */
         launch(mainArgs);
     }
 
     /**
-     * Start method for java FX application, set stage, etc.
+     * Start method for Java FX application, set stage, etc.
      *
      * @param primaryStage stage to apply children to
      * @throws Exception if something goes wrong during the process
@@ -112,7 +124,7 @@ public class Main extends Application {
         primaryStage.setScene(new Scene(root, 600, 400));
         primaryStage.setOnCloseRequest(windowEvent -> {
             QuickLog.log("Shutting down.", QuickLog.LogType.WARNING);
-            getFileHandler().storeSettings();
+            getSettingsHandler().storeSettings();
             getProcessingHandler().stop();
             System.exit(0);
         });
@@ -145,8 +157,8 @@ public class Main extends Application {
         return processedFile;
     }
 
-    public FileHandler getFileHandler() {
-        return fileHandler;
+    public SettingsHandler getSettingsHandler() {
+        return settingsHandler;
     }
 
     public ConfigHandler getConfigHandler() {

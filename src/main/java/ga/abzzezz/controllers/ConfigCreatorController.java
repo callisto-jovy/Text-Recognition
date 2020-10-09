@@ -60,12 +60,21 @@ public class ConfigCreatorController {
      * Capture started indicator
      */
     private boolean capture;
+    /**
+     * Index for the current point to be set
+     */
     private int pointIndex;
 
+    /**
+     * Default jfx initialize method.
+     * Sets text and adds the polygon to the pane.
+     * Furthermore sets mouse handler for the imageview
+     */
     @FXML
     public void initialize() {
         threshold1.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
         threshold2.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
+        /* Create polygon and define attributes */
         this.polygon = new Polygon();
         polygon.setFill(Color.TRANSPARENT);
         polygon.setStroke(Color.GREEN);
@@ -141,7 +150,9 @@ public class ConfigCreatorController {
     @FXML
     public void saveConfig() {
         movePolygons(false);
-        Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(JOptionPane.showInputDialog("Config name")));
+        final String response = JOptionPane.showInputDialog("Config name");
+        if (response != null && !response.isEmpty())
+            Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(response));
     }
 
     /**

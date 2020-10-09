@@ -81,10 +81,20 @@ public class MainController {
         yAxisField.setDisable(state);
     }
 
+    @FXML
+    public void saveConfig(ActionEvent event) {
+    }
+
+    @FXML
+    public void loadConfig(ActionEvent event) {
+    }
+
+
     /**
      * Method that is called after the mouse on the Y-Slider has been released
      */
     @FXML
+
     public void onYAxisChanged() {
         final int value = Main.INSTANCE.getSerialHandler().changeYAxis((int) yAxisSlider.getValue());
         yAxisField.setText(String.valueOf(value));

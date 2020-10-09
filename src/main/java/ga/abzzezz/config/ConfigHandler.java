@@ -42,7 +42,7 @@ public class ConfigHandler {
     private final List<Config> configs = new ArrayList<>();
 
     /**
-     * Iterates over all files in the app's config directory. Reads the config and adds it to it's list
+     * Iterates over all files in the app's config directory. Reads the config and adds it to the config list
      */
     public void loadConfigs() {
         try {
@@ -74,7 +74,7 @@ public class ConfigHandler {
     }
 
     /**
-     * Create a config with the purpose of
+     * Create a config with points, each one representing one vertex
      *
      * @param name config name
      * @return auto created config
@@ -91,7 +91,7 @@ public class ConfigHandler {
     }
 
     /**
-     * Load config, dependent on it's id
+     * Loads a config dependent on it's id
      *
      * @param config config to be loaded
      */
@@ -112,11 +112,13 @@ public class ConfigHandler {
                         try {
                             Main.INSTANCE.getVertexHandler().addPoint(i, new Point(pointJson.getDouble("x"), pointJson.getDouble("y")));
                         } catch (final ArrayIndexOutOfBoundsException outOfBoundsException) {
-                            QuickLog.log("More indexes in saved point array than possible", QuickLog.LogType.ERROR);
+                            QuickLog.log("More indices in saved array than possible", QuickLog.LogType.ERROR);
                         }
                     }
+                    Main.INSTANCE.getVertexHandler().move();
                 }
                 break;
+            case IMAGE_THRESHOLD_MODE:
             default:
                 break;
         }
@@ -169,6 +171,9 @@ public class ConfigHandler {
         loadConfigs();
     }
 
+    /**
+     * @return list of all configs
+     */
     public List<Config> getConfigs() {
         return configs;
     }

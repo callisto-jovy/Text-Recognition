@@ -14,7 +14,8 @@ package ga.abzzezz.util;
 public class QuickLog {
     /**
      * Log to console
-     * @param log String to log
+     *
+     * @param log     String to log
      * @param logType Type to quickly identify
      */
     public static void log(final String log, final LogType logType) {

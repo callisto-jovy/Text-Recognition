@@ -6,14 +6,30 @@
  *
  */
 
-package ga.abzzezz.file;
+/*
+ * Created by Roman P.  (2020)
+ *
+ *
+ *
+ *
+ */
+
+/*
+ * Created by Roman P.  (2020)
+ *
+ *
+ *
+ *
+ */
+
+package ga.abzzezz.setting;
 
 import ga.abzzezz.Main;
 import ga.abzzezz.util.FileUtil;
 import ga.abzzezz.util.SettingsHolder;
 import org.json.JSONObject;
 
-public class FileHandler {
+public class SettingsHandler {
 
     public void storeSettings() {
         final JSONObject jsonObject = new JSONObject();
