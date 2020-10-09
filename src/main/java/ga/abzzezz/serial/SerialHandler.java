@@ -94,6 +94,7 @@ public class SerialHandler {
      * @param amount amount ton change to
      */
     public int changeXAxis(int amount) {
+        if (!getSerialPort().isPresent()) return Main.INSTANCE.getRotationHandler().getX();
         if (!serialPort.isOpen())
             return Main.INSTANCE.getRotationHandler().getX();
 
@@ -127,9 +128,9 @@ public class SerialHandler {
      * @param amount amount ton change to
      */
     public int changeYAxis(int amount) {
+        if (!getSerialPort().isPresent()) return Main.INSTANCE.getRotationHandler().getX();
         if (!serialPort.isOpen())
             return Main.INSTANCE.getRotationHandler().getY();
-
         final int a = changeAmount(amount, 'Y');
         Main.INSTANCE.getRotationHandler().setY(a);
         return a;
