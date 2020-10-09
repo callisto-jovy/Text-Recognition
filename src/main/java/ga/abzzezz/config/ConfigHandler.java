@@ -38,6 +38,10 @@ public class ConfigHandler {
      */
     public static final int IMAGE_THRESHOLD_MODE = 2;
     /**
+     * Mode to load all
+     */
+    public static final int ALL_MODE = 8;
+    /**
      * List of all current, loaded configs
      */
     private final List<Config> configs = new ArrayList<>();
@@ -100,14 +104,14 @@ public class ConfigHandler {
         switch (config.getMode()) {
             case SERVO_MODE:
                 for (final Object o : config.getContent()) {
-                    final JSONObject jsonObject = new JSONObject(o.toString());
+                    final JSONObject jsonObject = new JSONObject(o);
                     Main.INSTANCE.getSerialHandler().changeXAxis(jsonObject.getInt("x"));
                     Main.INSTANCE.getSerialHandler().changeYAxis(jsonObject.getInt("y"));
                 }
                 break;
             case IMAGE_VERTEX_MODE:
                 for (final Object content : config.getContent()) {
-                    final JSONArray pointArray = new JSONArray(content.toString());
+                    final JSONArray pointArray = new JSONArray(content);
                     for (int i = 0; i < pointArray.length(); i++) {
                         final JSONObject pointJson = pointArray.getJSONObject(i);
                         try {
@@ -120,6 +124,17 @@ public class ConfigHandler {
                 }
                 break;
             case IMAGE_THRESHOLD_MODE:
+
+                break;
+
+            case ALL_MODE:
+                for (final Object content : config.getContent()) {
+                    final JSONArray nestedArray = new JSONArray(content);
+                    for (final Object nestedObject : nestedArray) {
+                        loadConfig(readConfig(nestedObject.toString()));
+                    }
+                }
+                break;
             default:
                 break;
         }
