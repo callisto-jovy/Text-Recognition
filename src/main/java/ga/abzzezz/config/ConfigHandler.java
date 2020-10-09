@@ -110,7 +110,7 @@ public class ConfigHandler {
                     for (int i = 0; i < pointArray.length(); i++) {
                         final JSONObject pointJson = pointArray.getJSONObject(i);
                         try {
-                            Main.INSTANCE.getVertexHandler().getPoints().set(i, new Point(pointJson.getDouble("x"), pointJson.getDouble("y")));
+                            Main.INSTANCE.getVertexHandler().addPoint(i, new Point(pointJson.getDouble("x"), pointJson.getDouble("y")));
                         } catch (final ArrayIndexOutOfBoundsException outOfBoundsException) {
                             QuickLog.log("More indexes in saved point array than possible", QuickLog.LogType.ERROR);
                         }

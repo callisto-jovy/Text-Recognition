@@ -9,11 +9,7 @@
 package ga.abzzezz.image;
 
 import ga.abzzezz.Main;
-import ga.abzzezz.util.FileUtil;
-import ga.abzzezz.util.MathUtil;
-import ga.abzzezz.util.QuickLog;
-import ga.abzzezz.util.SettingsHolder;
-import javafx.embed.swing.SwingFXUtils;
+import ga.abzzezz.util.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import net.sourceforge.tess4j.Tesseract;
@@ -26,10 +22,13 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,13 +61,18 @@ public class ProcessingHandler {
     /**
      * Camera index (integrated webcam usually no. 0)
      */
-    private final int camIndex = 0;
+    private final int camIndex = 1;
+
+    /**
+     * Image encoding
+     */
+    private final String imgEncode = ".png";
 
     public ProcessingHandler() {
         QuickLog.log("Loading tesseract", QuickLog.LogType.INFO);
         tesseract.setDatapath("tessdata");
         tesseract.setLanguage("ssd");
-        tesseract.setTessVariable("user_defined_dpi", "300");
+        //tesseract.setTessVariable("user_defined_dpi", "500");
         QuickLog.log("Done loading tesseract", QuickLog.LogType.INFO);
     }
 
@@ -85,11 +89,10 @@ public class ProcessingHandler {
                 final MatOfByte processedByteMat = new MatOfByte();
                 final Mat copyMat = doProcessing(videoMat);
 
-                Imgcodecs.imencode(".jpg", copyMat, processedByteMat);
+                Imgcodecs.imencode(imgEncode, copyMat, processedByteMat);
 
                 final byte[] bytes = processedByteMat.toArray();
                 imageView.setImage(new Image(new ByteArrayInputStream(bytes)));
-
 
                 processedByteMat.release();
                 copyMat.release();
@@ -109,11 +112,10 @@ public class ProcessingHandler {
         videoCapture.open(camIndex);
         executorService.submit(new Thread(() -> {
             videoCapture.read(imageMap);
-            //TODO: Move to method
             final MatOfByte processedByteMat = new MatOfByte();
             final Mat copyMat = doProcessing(imageMap);
 
-            Imgcodecs.imencode(".jpg", copyMat, processedByteMat);
+            Imgcodecs.imencode(imgEncode, copyMat, processedByteMat);
             imageView.setImage(new Image(new ByteArrayInputStream(processedByteMat.toArray())));
 
             processedByteMat.release();
@@ -131,7 +133,7 @@ public class ProcessingHandler {
         final MatOfByte processedByteMat = new MatOfByte();
         final Mat copyMat = doProcessing(imageMap);
 
-        Imgcodecs.imencode(".jpg", copyMat, processedByteMat);
+        Imgcodecs.imencode(imgEncode, copyMat, processedByteMat);
         imageView.setImage(new Image(new ByteArrayInputStream(processedByteMat.toArray())));
 
         processedByteMat.release();
@@ -149,11 +151,9 @@ public class ProcessingHandler {
         if (getRect().isPresent()) {
             final Rect rect = getRect().get();
             dest = new Mat(src, rect);
-
             Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY, 0);
-            Imgproc.rectangle(dest, rect, new Scalar(0, 255, 0), 2);
             Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
-
+            Imgproc.polylines(dest, Main.INSTANCE.getVertexHandler().getMatOfPoints(), true, new Scalar(255, 255, 255), 3);
         } else {
             Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY, 0);
             Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
@@ -198,16 +198,21 @@ public class ProcessingHandler {
                 rectangle = new Rectangle(getRect().get().x, rect.y, rect.width, rect.height);
             }
             final String tessGuess = tesseract.doOCR(image, rectangle);
+            ImageIO.write(image, "png", new File(System.getProperty("user.home"), "out.png"));
+
             System.out.println("Guess:" + tessGuess);
             if (!tessGuess.isEmpty()) {
                 if (SettingsHolder.logResultsToFile)
                     FileUtil.writeStringToFile(Main.INSTANCE.getProcessedFile(), tessGuess, true);
                 return tessGuess;
             }
+
         } catch (final TesseractException e) {
             QuickLog.log("Doing OCR", QuickLog.LogType.ERROR);
             e.printStackTrace();
             return "";
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return "";
     }

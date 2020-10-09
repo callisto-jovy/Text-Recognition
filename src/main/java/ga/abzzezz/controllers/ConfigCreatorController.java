@@ -74,15 +74,17 @@ public class ConfigCreatorController {
 
         imageView.setOnMouseClicked(mouseEvent -> {
             if (capture) return;
-
             final double xPos = mouseEvent.getX(), yPos = mouseEvent.getY();
+
             if (pointIndex == -1) {
-                clearPolygon();
+                clearPoints();
                 pointIndex++;
             }
 
             if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+                System.out.println("Peppe");
                 polygon.getPoints().addAll(xPos, yPos);
+                Main.INSTANCE.getVertexHandler().addPoint(pointIndex, new Point(xPos, yPos));
                 pointIndex++;
             } else if (mouseEvent.getButton() == MouseButton.SECONDARY) {
                 if (polygon.getPoints().size() > 0)
@@ -93,7 +95,7 @@ public class ConfigCreatorController {
              * If first polygon is completed & new ones are selected, delete old polygon
              */
             if (pointIndex >= 4) {
-                movePolygons(true);
+                Main.INSTANCE.getVertexHandler().move();
                 pointIndex = -1;
                 QuickLog.log("Stored last four points", QuickLog.LogType.INFO);
             }
@@ -153,9 +155,8 @@ public class ConfigCreatorController {
         final String response = JOptionPane.showInputDialog(null, strings + "\nChoose from 0 - " + (configs.length - 1));
         if (response != null && !response.isEmpty()) {
             final int index = Integer.parseInt(response);
+            clearPoints();
             Main.INSTANCE.getConfigHandler().loadConfig(configs[index]);
-            clearPolygon();
-
             for (final Point point : Main.INSTANCE.getVertexHandler().getPoints()) {
                 polygon.getPoints().addAll(point.x, point.y);
             }
@@ -181,7 +182,8 @@ public class ConfigCreatorController {
     @FXML
     public void clearPoints() {
         clearPolygon();
-        Main.INSTANCE.getVertexHandler().getPoints().clear();
+        Main.INSTANCE.getVertexHandler().clear();
+        pointIndex = -1;
     }
 
     /**
@@ -206,6 +208,7 @@ public class ConfigCreatorController {
      */
     @FXML
     public void refreshImage() {
+        clearPolygon();
         Main.INSTANCE.getProcessingHandler().refreshProcessing(imageView);
     }
 
@@ -217,7 +220,7 @@ public class ConfigCreatorController {
     private void movePolygons(final boolean deleteOld) {
         if (deleteOld) clearPoints();
         for (int i = 1; i < polygon.getPoints().size(); i += 2) {
-            Main.INSTANCE.getVertexHandler().getPoints().add(i / 2, new Point(polygon.getPoints().get(i - 1), polygon.getPoints().get(i)));
+            Main.INSTANCE.getVertexHandler().addPoint(i / 2, new Point(polygon.getPoints().get(i - 1), polygon.getPoints().get(i)));
         }
     }
 
