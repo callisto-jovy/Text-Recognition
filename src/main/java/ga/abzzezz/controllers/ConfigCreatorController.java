@@ -86,6 +86,7 @@ public class ConfigCreatorController {
                 pointIndex++;
             }
 
+            System.out.println("ll");
             if (mouseEvent.getButton() == MouseButton.PRIMARY) {
                 polygon.getPoints().addAll(xPos, yPos);
                 Main.INSTANCE.getVertexHandler().addPoint(pointIndex, new Point(xPos, yPos));

@@ -179,11 +179,15 @@ public class ConfigHandler {
      */
     public Optional<String> showDialogConfigName() {
         final String response = JOptionPane.showInputDialog("Config name");
-        return Optional.of(response);
+        if (response != null && !response.isEmpty())
+            return Optional.of(response);
+        else
+            return Optional.empty();
     }
 
     /**
      * Shows a input dialog with all available configs, collected with a predicate
+     *
      * @param predicate predicate to filter
      * @return user selected config
      */
@@ -192,7 +196,10 @@ public class ConfigHandler {
         //TODO: Add list selection
         final String strings = Arrays.stream(configs).map(Config::getName).collect(Collectors.joining("\n"));
         final String response = JOptionPane.showInputDialog(null, strings + "\nChoose from 0 - " + (configs.length - 1));
-        return Optional.of(configs[Integer.parseInt(response)]);
+        if (response != null && !response.isEmpty())
+            return Optional.of(configs[Integer.parseInt(response)]);
+        else
+            return Optional.empty();
     }
 
     /**

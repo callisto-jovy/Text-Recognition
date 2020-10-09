@@ -148,14 +148,30 @@ public class ProcessingHandler {
             final int[] bounds = optionalBounds.get();
             final Rect rect = new Rect(bounds[0], bounds[1], bounds[2], bounds[3]);
             dest = new Mat(src, rect);
-            Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY, 0);
-            Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
-            Imgproc.polylines(dest, Main.INSTANCE.getVertexHandler().getMatOfPoints(), true, new Scalar(255, 255, 255), 3);
+            doProcessing(src, dest);
+            Imgproc.rectangle(dest, rect, new Scalar(255, 255, 255), 3);
+            //Imgproc.polylines(dest, Main.INSTANCE.getVertexHandler().getMatOfPoints(), true, new Scalar(255, 255, 255), 3);
         } else {
-            Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY, 0);
-            Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
+            doProcessing(src, dest);
         }
         return dest;
+    }
+
+    /**
+     * Apply different image manipulation from a source mat to a destination mat
+     *
+     * @param src  source from
+     * @param dest destination to apply to
+     */
+    private void doProcessing(final Mat src, final Mat dest) {
+        Imgproc.bilateralFilter(src, dest, 10, 17, 17);
+        Imgproc.cvtColor(src, dest, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.GaussianBlur(dest, dest, new Size(1, 1), 1);
+        //TODO: Image processing
+        // Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
+        Imgproc.threshold(dest, dest, getThresholds()[0], getThresholds()[1], Imgproc.THRESH_BINARY);
+        Imgproc.erode(dest, dest, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
+
     }
 
     /**
