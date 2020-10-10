@@ -69,12 +69,12 @@ public class ConfigHandler {
      * Create a config with current servo positions
      *
      * @param name      config name
-     * @param positions the servo's current position
+     * @param rotations the servo's current position
      * @return auto created config
      */
-    public Config createServoConfig(final String name, final int[] positions) {
+    public Config createServoConfig(final String name, final int[] rotations) {
         final JSONArray struct = new JSONArray();
-        struct.put(new JSONObject().put("rotX", positions[0]).put("rotY", positions[1]));
+        struct.put(new JSONObject().put("rotX", rotations[0]).put("rotY", rotations[1]));
         return createConfig(name, SERVO_MODE, struct);
     }
 
@@ -96,6 +96,31 @@ public class ConfigHandler {
     }
 
     /**
+     * Create threshold config
+     *
+     * @param name config name
+     * @return auto created config
+     */
+    public Config createThresholdConfig(final String name) {
+        final JSONArray struct = new JSONArray();
+        struct.put(new JSONObject().put("thresh1", Main.INSTANCE.getProcessingHandler().getThresholds()[0]).put("thresh2", Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
+        return createConfig(name, IMAGE_THRESHOLD_MODE, struct);
+    }
+
+    /**
+     * Create config for all
+     *
+     * @param name      config name
+     * @param rotations rotations for servo config
+     * @return config created from all
+     */
+    public Config createAllConfig(final String name, final int[] rotations) {
+        final JSONArray struct = new JSONArray();
+        struct.put(writeConfig0(createPointConfig(name))).put(writeConfig0(createServoConfig(name, rotations))).put(writeConfig0(createThresholdConfig(name)));
+        return createConfig(name, ALL_MODE, struct);
+    }
+
+    /**
      * Loads a config dependent on it's id
      *
      * @param config config to be loaded
@@ -104,14 +129,14 @@ public class ConfigHandler {
         switch (config.getMode()) {
             case SERVO_MODE:
                 for (final Object o : config.getContent()) {
-                    final JSONObject jsonObject = new JSONObject(o);
-                    Main.INSTANCE.getSerialHandler().changeXAxis(jsonObject.getInt("x"));
-                    Main.INSTANCE.getSerialHandler().changeYAxis(jsonObject.getInt("y"));
+                    final JSONObject jsonObject = new JSONObject(o.toString());
+                    Main.INSTANCE.getSerialHandler().changeXAxis(jsonObject.getInt("rotX"));
+                    Main.INSTANCE.getSerialHandler().changeYAxis(jsonObject.getInt("rotY"));
                 }
                 break;
             case IMAGE_VERTEX_MODE:
                 for (final Object content : config.getContent()) {
-                    final JSONArray pointArray = new JSONArray(content);
+                    final JSONArray pointArray = new JSONArray(content.toString());
                     for (int i = 0; i < pointArray.length(); i++) {
                         final JSONObject pointJson = pointArray.getJSONObject(i);
                         try {
@@ -120,19 +145,19 @@ public class ConfigHandler {
                             QuickLog.log("More indices in saved array than possible", QuickLog.LogType.ERROR);
                         }
                     }
-                    Main.INSTANCE.getVertexHandler().move();
                 }
+                Main.INSTANCE.getVertexHandler().move();
                 break;
             case IMAGE_THRESHOLD_MODE:
-
+                for (final Object content : config.getContent()) {
+                    final JSONObject jsonObject = new JSONObject(content.toString());
+                    Main.INSTANCE.getProcessingHandler().setThreshold1(jsonObject.getDouble("thresh1"));
+                    Main.INSTANCE.getProcessingHandler().setThreshold2(jsonObject.getDouble("thresh2"));
+                }
                 break;
-
             case ALL_MODE:
                 for (final Object content : config.getContent()) {
-                    final JSONArray nestedArray = new JSONArray(content);
-                    for (final Object nestedObject : nestedArray) {
-                        loadConfig(readConfig(nestedObject.toString()));
-                    }
+                    loadConfig(readConfig(content.toString()));
                 }
                 break;
             default:
@@ -173,6 +198,17 @@ public class ConfigHandler {
     private String writeConfig(final Config config) {
         return new JSONObject().put("meta", new JSONObject().put("name", config.getName()).put("mode", config.getMode())).put("struct", config.getContent()).toString();
     }
+
+    /**
+     * Convert config to JSON
+     *
+     * @param config Config to be parsed
+     * @return JSON string
+     */
+    private JSONObject writeConfig0(final Config config) {
+        return new JSONObject().put("meta", new JSONObject().put("name", config.getName()).put("mode", config.getMode())).put("struct", config.getContent());
+    }
+
 
     /**
      * Save config in the config directory with a random uuid

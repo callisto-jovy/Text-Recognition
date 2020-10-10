@@ -151,9 +151,7 @@ public class ProcessingHandler {
             doProcessing(src, dest);
             Imgproc.rectangle(dest, rect, new Scalar(255, 255, 255), 3);
             //Imgproc.polylines(dest, Main.INSTANCE.getVertexHandler().getMatOfPoints(), true, new Scalar(255, 255, 255), 3);
-        } else {
-            doProcessing(src, dest);
-        }
+        } else doProcessing(src, dest);
         return dest;
     }
 

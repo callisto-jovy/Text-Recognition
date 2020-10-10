@@ -145,7 +145,7 @@ public class ConfigCreatorController {
     @FXML
     public void saveConfig() {
         movePolygons(false);
-        Main.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createPointConfig(s)));
+        Main.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createAllConfig(s, Main.INSTANCE.getRotationHandler().getCurrentRotations())));
     }
 
     /**
@@ -153,12 +153,15 @@ public class ConfigCreatorController {
      */
     @FXML
     public void loadConfig() {
-        Main.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.IMAGE_VERTEX_MODE).ifPresent(response -> {
+        Main.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.ALL_MODE).ifPresent(response -> {
             clearPoints();
             Main.INSTANCE.getConfigHandler().loadConfig(response);
             for (final Point point : Main.INSTANCE.getVertexHandler().getPoints()) {
                 polygon.getPoints().addAll(point.x, point.y);
             }
+
+            threshold1Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
+            threshold2Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
         });
     }
 
@@ -208,7 +211,7 @@ public class ConfigCreatorController {
     @FXML
     public void refreshImage() {
         clearPolygon();
-        if(imageView == null || imageView.getImage() == null) return;
+        if (imageView == null || imageView.getImage() == null) return;
         Main.INSTANCE.getProcessingHandler().refreshProcessing(imageView);
     }
 
