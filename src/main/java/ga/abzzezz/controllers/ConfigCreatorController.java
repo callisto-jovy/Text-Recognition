@@ -159,7 +159,6 @@ public class ConfigCreatorController {
             for (final Point point : Main.INSTANCE.getVertexHandler().getPoints()) {
                 polygon.getPoints().addAll(point.x, point.y);
             }
-
             threshold1Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
             threshold2Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
         });

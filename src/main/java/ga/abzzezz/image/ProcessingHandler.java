@@ -144,14 +144,15 @@ public class ProcessingHandler {
     private Mat doProcessing(final Mat src) {
         Mat dest = new Mat();
         final Optional<int[]> optionalBounds = getRect();
+        doProcessing(src, dest);
+
         if (optionalBounds.isPresent()) {
             final int[] bounds = optionalBounds.get();
             final Rect rect = new Rect(bounds[0], bounds[1], bounds[2], bounds[3]);
             dest = new Mat(src, rect);
-            doProcessing(src, dest);
             Imgproc.rectangle(dest, rect, new Scalar(255, 255, 255), 3);
             //Imgproc.polylines(dest, Main.INSTANCE.getVertexHandler().getMatOfPoints(), true, new Scalar(255, 255, 255), 3);
-        } else doProcessing(src, dest);
+        }
         return dest;
     }
 
@@ -282,7 +283,7 @@ public class ProcessingHandler {
      * @return int array containing x, y, width, height
      */
     private Optional<int[]> getRect() {
-        if (Main.INSTANCE.getVertexHandler().getPoints().size() == 4) {
+        if (Main.INSTANCE.getVertexHandler().getPoints().size() >= 3) {
             final Point p1 = Main.INSTANCE.getVertexHandler().getPoints().get(0);
             final Point p2 = Main.INSTANCE.getVertexHandler().getPoints().get(2);
             final int x = (int) (Math.min(p1.x, p2.x));
