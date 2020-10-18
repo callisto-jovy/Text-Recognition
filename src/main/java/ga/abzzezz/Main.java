@@ -96,9 +96,11 @@ public class Main extends Application {
             final int port = jsonObject.getInt("port");
             getRotationHandler().setX(rotX);
             getRotationHandler().setY(rotY);
-            getSerialHandler().setIndex(port);
-            if (port > SerialPort.getCommPorts().length)
+
+            if (port > SerialPort.getCommPorts().length) {
+                getSerialHandler().setIndex(port);
                 getSerialHandler().setPort(SerialPort.getCommPorts()[port]);
+            }
 
             SettingsHolder.logResultsToFile = jsonObject.getBoolean("logResultsToFile");
             getProcessingHandler().setThreshold1(jsonObject.getDouble("threshold1"));

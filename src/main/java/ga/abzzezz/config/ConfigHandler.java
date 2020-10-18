@@ -54,11 +54,13 @@ public class ConfigHandler {
             if (!Main.INSTANCE.getConfigDir().exists())
                 Main.INSTANCE.getConfigDir().mkdir();
             QuickLog.log("Configs", QuickLog.LogType.READING);
-
-            for (final File file : Main.INSTANCE.getConfigDir().listFiles()) {
-                final Config readConfig = readConfig(FileUtil.getFileContentsAsString(file));
-                configs.add(readConfig);
-            }
+            final Optional<File[]> files = Optional.ofNullable(Main.INSTANCE.getConfigDir().listFiles());
+            files.ifPresent(files1 -> {
+                for (final File file : files1) {
+                    final Config readConfig = readConfig(FileUtil.getFileContentsAsString(file));
+                    configs.add(readConfig);
+                }
+            });
         } catch (final IllegalAccessError e) {
             QuickLog.log("Creating config directory. No configs will be available", QuickLog.LogType.ERROR);
             e.printStackTrace();
