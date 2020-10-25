@@ -115,7 +115,7 @@ public class ConfigHandler {
     }
 
     /**
-     * Create config for all
+     * Create config for all modes
      *
      * @param name      config name
      * @param rotations rotations for servo config
@@ -128,13 +128,22 @@ public class ConfigHandler {
     }
 
     /**
-     * Loads a config dependent on it's id
+     * Called when a config should be loaded, set current config name & proceed to load as usual
      *
      * @param config config to be loaded
      */
     public void loadConfig(final Config config) {
         currentConfig = config.getName();
+        loadConfig0(config);
+    }
 
+    /**
+     * Base method to load a config
+     * Executes code dependent on the config's mode
+     *
+     * @param config config to be loaded
+     */
+    private void loadConfig0(final Config config) {
         switch (config.getMode()) {
             case SERVO_MODE:
                 for (final Object o : config.getContent()) {
@@ -214,10 +223,19 @@ public class ConfigHandler {
      * @param config Config to be parsed
      * @return JSON string
      */
+    private JSONObject writeStruct(final Config config) {
+        return new JSONObject().put("struct", config.getContent());
+    }
+
+    /**
+     * Convert config to JSON
+     *
+     * @param config Config to be parsed
+     * @return JSON string
+     */
     private JSONObject writeConfig0(final Config config) {
         return new JSONObject().put("meta", new JSONObject().put("name", config.getName()).put("mode", config.getMode())).put("struct", config.getContent());
     }
-
 
     /**
      * Save config in the config directory with a random uuid

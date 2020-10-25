@@ -16,7 +16,9 @@ import javafx.stage.Stage;
 
 public class App extends Application {
 
-
+    public void launch0(final String[] args) {
+        launch(args);
+    }
     /**
      * Start method for Java FX application, set stage, etc.
      *

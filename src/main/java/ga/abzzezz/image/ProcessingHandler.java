@@ -210,14 +210,10 @@ public class ProcessingHandler {
                 rectangle = new Rectangle(bounds[0], bounds[1], bounds[2], bounds[3]);
             }
             final String ocr = tesseract.doOCR(image, rectangle);
-            final String formatted = getFormattedOCR(ocr);
 
             if (!ocr.isEmpty()) {
-                if (SettingsHolder.logResultsToFile) {
-                    FileUtil.writeStringToFile(Singleton.INSTANCE.getProcessedFile(), formatted, true);
-
-                }
-                return formatted;
+                if (SettingsHolder.logResultsToFile) FileUtil.writeStringToFile(Singleton.INSTANCE.getProcessedFile(), getFormattedOCR(ocr), true);
+                return ocr;
             }
 
         } catch (final TesseractException e) {
@@ -256,7 +252,6 @@ public class ProcessingHandler {
         final Date date = new Date();
         return new JSONObject().put("date", formatter.format(date)).put("guess", guess).put("profile", Singleton.INSTANCE.getConfigHandler().getCurrentConfig()).toString();
     }
-
 
     /**
      * Return both thresholds

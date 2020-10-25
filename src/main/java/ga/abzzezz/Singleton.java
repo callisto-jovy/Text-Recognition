@@ -104,7 +104,7 @@ public class Singleton {
         /* Load configs */
         getConfigHandler().loadConfigs();
         /* Launch Java FX application */
-        App.launch(mainArgs);
+        new App().launch0(mainArgs);
     }
 
     public void shutdown() {

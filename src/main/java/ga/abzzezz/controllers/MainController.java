@@ -88,17 +88,6 @@ public class MainController {
         xAxisField.setDisable(state);
         yAxisField.setDisable(state);
     }
-
-    @FXML
-    public void saveConfig(final ActionEvent event) {
-        Singleton.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Singleton.INSTANCE.getConfigHandler().saveConfig(Singleton.INSTANCE.getConfigHandler().createServoConfig(s, Singleton.INSTANCE.getRotationHandler().getCurrentRotations())));
-    }
-
-    @FXML
-    public void loadConfig(final ActionEvent event) {
-        Singleton.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.SERVO_MODE).ifPresent(response -> Singleton.INSTANCE.getConfigHandler().loadConfig(response));
-    }
-
     /**
      * Method that is called after the mouse on the Y-Slider has been released
      */
