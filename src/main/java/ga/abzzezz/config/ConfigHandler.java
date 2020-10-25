@@ -1,14 +1,14 @@
 /*
- * Created by Roman P.  (2020)
- *
- *
+ * Created by Roman P.  (2020.)
+ * created to work on Java version 8
  *
  *
  */
 
+
 package ga.abzzezz.config;
 
-import ga.abzzezz.Main;
+import ga.abzzezz.Singleton;
 import ga.abzzezz.util.FileUtil;
 import ga.abzzezz.util.QuickLog;
 import org.json.JSONArray;
@@ -47,14 +47,19 @@ public class ConfigHandler {
     private final List<Config> configs = new ArrayList<>();
 
     /**
+     * Name of the current config
+     */
+    private String currentConfig;
+
+    /**
      * Iterates over all files in the app's config directory. Reads the config and adds it to the config list
      */
     public void loadConfigs() {
         try {
-            if (!Main.INSTANCE.getConfigDir().exists())
-                Main.INSTANCE.getConfigDir().mkdir();
+            if (!Singleton.INSTANCE.getConfigDir().exists())
+                Singleton.INSTANCE.getConfigDir().mkdir();
             QuickLog.log("Configs", QuickLog.LogType.READING);
-            final Optional<File[]> files = Optional.ofNullable(Main.INSTANCE.getConfigDir().listFiles());
+            final Optional<File[]> files = Optional.ofNullable(Singleton.INSTANCE.getConfigDir().listFiles());
             files.ifPresent(files1 -> {
                 for (final File file : files1) {
                     final Config readConfig = readConfig(FileUtil.getFileContentsAsString(file));
@@ -89,7 +94,7 @@ public class ConfigHandler {
     public Config createPointConfig(final String name) {
         final JSONArray struct = new JSONArray();
         final JSONArray pointsInArray = new JSONArray();
-        for (final Point point : Main.INSTANCE.getVertexHandler().getPoints()) {
+        for (final Point point : Singleton.INSTANCE.getVertexHandler().getPoints()) {
             final JSONObject pointObject = new JSONObject().put("x", point.x).put("y", point.y);
             pointsInArray.put(pointObject);
         }
@@ -105,7 +110,7 @@ public class ConfigHandler {
      */
     public Config createThresholdConfig(final String name) {
         final JSONArray struct = new JSONArray();
-        struct.put(new JSONObject().put("thresh1", Main.INSTANCE.getProcessingHandler().getThresholds()[0]).put("thresh2", Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
+        struct.put(new JSONObject().put("thresh1", Singleton.INSTANCE.getProcessingHandler().getThresholds()[0]).put("thresh2", Singleton.INSTANCE.getProcessingHandler().getThresholds()[1]));
         return createConfig(name, IMAGE_THRESHOLD_MODE, struct);
     }
 
@@ -128,12 +133,14 @@ public class ConfigHandler {
      * @param config config to be loaded
      */
     public void loadConfig(final Config config) {
+        currentConfig = config.getName();
+
         switch (config.getMode()) {
             case SERVO_MODE:
                 for (final Object o : config.getContent()) {
                     final JSONObject jsonObject = new JSONObject(o.toString());
-                    Main.INSTANCE.getSerialHandler().changeXAxis(jsonObject.getInt("rotX"));
-                    Main.INSTANCE.getSerialHandler().changeYAxis(jsonObject.getInt("rotY"));
+                    Singleton.INSTANCE.getSerialHandler().changeXAxis(jsonObject.getInt("rotX"));
+                    Singleton.INSTANCE.getSerialHandler().changeYAxis(jsonObject.getInt("rotY"));
                 }
                 break;
             case IMAGE_VERTEX_MODE:
@@ -142,19 +149,19 @@ public class ConfigHandler {
                     for (int i = 0; i < pointArray.length(); i++) {
                         final JSONObject pointJson = pointArray.getJSONObject(i);
                         try {
-                            Main.INSTANCE.getVertexHandler().addPoint(i, new Point(pointJson.getDouble("x"), pointJson.getDouble("y")));
+                            Singleton.INSTANCE.getVertexHandler().addPoint(i, new Point(pointJson.getDouble("x"), pointJson.getDouble("y")));
                         } catch (final ArrayIndexOutOfBoundsException outOfBoundsException) {
                             QuickLog.log("More indices in saved array than possible", QuickLog.LogType.ERROR);
                         }
                     }
                 }
-                Main.INSTANCE.getVertexHandler().move();
+                Singleton.INSTANCE.getVertexHandler().move();
                 break;
             case IMAGE_THRESHOLD_MODE:
                 for (final Object content : config.getContent()) {
                     final JSONObject jsonObject = new JSONObject(content.toString());
-                    Main.INSTANCE.getProcessingHandler().setThreshold1(jsonObject.getDouble("thresh1"));
-                    Main.INSTANCE.getProcessingHandler().setThreshold2(jsonObject.getDouble("thresh2"));
+                    Singleton.INSTANCE.getProcessingHandler().setThreshold1(jsonObject.getDouble("thresh1"));
+                    Singleton.INSTANCE.getProcessingHandler().setThreshold2(jsonObject.getDouble("thresh2"));
                 }
                 break;
             case ALL_MODE:
@@ -219,7 +226,7 @@ public class ConfigHandler {
      */
     public void saveConfig(final Config config) {
         QuickLog.log("Config to file", QuickLog.LogType.SAVING);
-        final File configFile = new File(Main.INSTANCE.getConfigDir(), UUID.randomUUID().toString() + ".config");
+        final File configFile = new File(Singleton.INSTANCE.getConfigDir(), UUID.randomUUID().toString() + ".config");
         FileUtil.writeStringToFile(configFile, writeConfig(config), false);
         QuickLog.log("Config saved", QuickLog.LogType.INFO);
         loadConfigs();
@@ -245,7 +252,7 @@ public class ConfigHandler {
      * @return user selected config
      */
     public Optional<Config> showAvailableConfigs(final Predicate<Config> predicate) {
-        final Config[] configs = Main.INSTANCE.getConfigHandler().getConfigs().stream().filter(predicate).toArray(Config[]::new);
+        final Config[] configs = Singleton.INSTANCE.getConfigHandler().getConfigs().stream().filter(predicate).toArray(Config[]::new);
         //TODO: Add list selection
         final String strings = Arrays.stream(configs).map(Config::getName).collect(Collectors.joining("\n"));
         final String response = JOptionPane.showInputDialog(null, strings + "\nChoose from 0 - " + (configs.length - 1));
@@ -260,5 +267,16 @@ public class ConfigHandler {
      */
     public List<Config> getConfigs() {
         return configs;
+    }
+
+    /**
+     * @return current loaded config name
+     */
+    public String getCurrentConfig() {
+        return currentConfig;
+    }
+
+    public void setCurrentConfig(String currentConfig) {
+        this.currentConfig = currentConfig;
     }
 }

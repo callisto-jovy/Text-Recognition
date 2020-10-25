@@ -1,19 +1,19 @@
 /*
- * Created by Roman P.  (2020)
- *
- *
+ * Created by Roman P.  (2020.)
+ * created to work on Java version 8
  *
  *
  */
 
 package ga.abzzezz.image;
 
-import ga.abzzezz.Main;
+import ga.abzzezz.Singleton;
 import ga.abzzezz.util.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
+import org.json.JSONObject;
 import org.opencv.core.Point;
 import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
@@ -24,6 +24,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,18 +56,17 @@ public class ProcessingHandler {
      */
     private final double[] thresholds = new double[2];
     /**
+     * Image encoding
+     */
+    private final String imgEncode = ".png";
+    /**
      * Camera index (integrated webcam usually no. 0)
      */
     private int camIndex = 1;
 
-    /**
-     * Image encoding
-     */
-    private final String imgEncode = ".png";
-
     public ProcessingHandler() {
         QuickLog.log("Loading tesseract", QuickLog.LogType.INFO);
-        tesseract.setDatapath("tessdata");
+        tesseract.setDatapath("resources/tessdata");
         tesseract.setLanguage("ssd");
         //tesseract.setTessVariable("user_defined_dpi", "500");
         QuickLog.log("Done loading tesseract", QuickLog.LogType.INFO);
@@ -149,7 +150,7 @@ public class ProcessingHandler {
         if (optionalBounds.isPresent()) {
             final int[] bounds = optionalBounds.get();
             final Rect rect = new Rect(bounds[0], bounds[1], bounds[2], bounds[3]);
-            dest = new Mat(src, rect);
+            dest = new Mat(dest, rect);
             Imgproc.rectangle(dest, rect, new Scalar(255, 255, 255), 3);
             //Imgproc.polylines(dest, Main.INSTANCE.getVertexHandler().getMatOfPoints(), true, new Scalar(255, 255, 255), 3);
         }
@@ -170,7 +171,6 @@ public class ProcessingHandler {
         // Imgproc.Canny(dest, dest, getThresholds()[0], getThresholds()[1]);
         Imgproc.threshold(dest, dest, getThresholds()[0], getThresholds()[1], Imgproc.THRESH_BINARY);
         Imgproc.erode(dest, dest, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(5, 5)));
-
     }
 
     /**
@@ -209,12 +209,15 @@ public class ProcessingHandler {
                 final int[] bounds = getRect().get();
                 rectangle = new Rectangle(bounds[0], bounds[1], bounds[2], bounds[3]);
             }
-            final String tessGuess = tesseract.doOCR(image, rectangle);
-            System.out.println("Guess:" + tessGuess);
-            if (!tessGuess.isEmpty()) {
-                if (SettingsHolder.logResultsToFile)
-                    FileUtil.writeStringToFile(Main.INSTANCE.getProcessedFile(), tessGuess, true);
-                return tessGuess;
+            final String ocr = tesseract.doOCR(image, rectangle);
+            final String formatted = getFormattedOCR(ocr);
+
+            if (!ocr.isEmpty()) {
+                if (SettingsHolder.logResultsToFile) {
+                    FileUtil.writeStringToFile(Singleton.INSTANCE.getProcessedFile(), formatted, true);
+
+                }
+                return formatted;
             }
 
         } catch (final TesseractException e) {
@@ -243,6 +246,17 @@ public class ProcessingHandler {
         }
         videoMat.release();
     }
+
+    /**
+     * Format String, so that contains all the information needed and can be read by a extra program
+     */
+    private String getFormattedOCR(final String guess) {
+        //Format date
+        final SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        final Date date = new Date();
+        return new JSONObject().put("date", formatter.format(date)).put("guess", guess).put("profile", Singleton.INSTANCE.getConfigHandler().getCurrentConfig()).toString();
+    }
+
 
     /**
      * Return both thresholds
@@ -283,9 +297,9 @@ public class ProcessingHandler {
      * @return int array containing x, y, width, height
      */
     private Optional<int[]> getRect() {
-        if (Main.INSTANCE.getVertexHandler().getPoints().size() >= 3) {
-            final Point p1 = Main.INSTANCE.getVertexHandler().getPoints().get(0);
-            final Point p2 = Main.INSTANCE.getVertexHandler().getPoints().get(2);
+        if (Singleton.INSTANCE.getVertexHandler().getPoints().size() >= 3) {
+            final Point p1 = Singleton.INSTANCE.getVertexHandler().getPoints().get(0);
+            final Point p2 = Singleton.INSTANCE.getVertexHandler().getPoints().get(2);
             final int x = (int) (Math.min(p1.x, p2.x));
             final int y = (int) (Math.min(p1.y, p2.y));
             final int width = (int) (Math.max(p1.x, p2.x)) - x;
@@ -294,11 +308,11 @@ public class ProcessingHandler {
         } else return Optional.empty();
     }
 
-    public void setCamIndex(int camIndex) {
-        this.camIndex = camIndex;
-    }
-
     public int getCamIndex() {
         return camIndex;
+    }
+
+    public void setCamIndex(int camIndex) {
+        this.camIndex = camIndex;
     }
 }

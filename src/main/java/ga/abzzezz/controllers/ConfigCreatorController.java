@@ -1,14 +1,13 @@
 /*
- * Created by Roman P.  (2020)
- *
- *
+ * Created by Roman P.  (2020.)
+ * created to work on Java version 8
  *
  *
  */
 
 package ga.abzzezz.controllers;
 
-import ga.abzzezz.Main;
+import ga.abzzezz.Singleton;
 import ga.abzzezz.config.ConfigHandler;
 import ga.abzzezz.util.QuickLog;
 import javafx.event.ActionEvent;
@@ -40,7 +39,7 @@ public class ConfigCreatorController {
      * Variables
      */
     @FXML
-    private ImageView imageView;
+    private ImageView captureView;
     @FXML
     private Button startCaptureButton;
     @FXML
@@ -48,9 +47,9 @@ public class ConfigCreatorController {
     @FXML
     private TextField threshold2Field;
     @FXML
-    private AnchorPane pane;
+    private AnchorPane parentPane;
     @FXML
-    private TextArea output;
+    private TextArea outputField;
 
     /**
      * Capture started indicator
@@ -68,16 +67,16 @@ public class ConfigCreatorController {
      */
     @FXML
     public void initialize() {
-        threshold1Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
-        threshold2Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
+        threshold1Field.setText(String.valueOf(Singleton.INSTANCE.getProcessingHandler().getThresholds()[0]));
+        threshold2Field.setText(String.valueOf(Singleton.INSTANCE.getProcessingHandler().getThresholds()[1]));
         /* Create polygon and define attributes */
         this.polygon = new Polygon();
         polygon.setFill(Color.TRANSPARENT);
         polygon.setStroke(Color.GREEN);
         polygon.setStrokeWidth(4);
-        pane.getChildren().add(polygon);
+        parentPane.getChildren().add(polygon);
 
-        imageView.setOnMouseClicked(mouseEvent -> {
+        captureView.setOnMouseClicked(mouseEvent -> {
             if (capture) return;
             final double xPos = mouseEvent.getX(), yPos = mouseEvent.getY();
 
@@ -88,7 +87,7 @@ public class ConfigCreatorController {
 
             if (mouseEvent.getButton() == MouseButton.PRIMARY) {
                 polygon.getPoints().addAll(xPos, yPos);
-                Main.INSTANCE.getVertexHandler().addPoint(pointIndex, new Point(xPos, yPos));
+                Singleton.INSTANCE.getVertexHandler().addPoint(pointIndex, new Point(xPos, yPos));
                 pointIndex++;
             } else if (mouseEvent.getButton() == MouseButton.SECONDARY) {
                 if (polygon.getPoints().size() > 0)
@@ -99,7 +98,7 @@ public class ConfigCreatorController {
              * If first polygon is completed & new ones are selected, delete old polygon
              */
             if (pointIndex >= 4) {
-                Main.INSTANCE.getVertexHandler().move();
+                Singleton.INSTANCE.getVertexHandler().move();
                 pointIndex = -1;
                 QuickLog.log("Stored last four points", QuickLog.LogType.INFO);
             }
@@ -111,7 +110,7 @@ public class ConfigCreatorController {
      */
     @FXML
     public void doAnalyse() {
-        output.appendText(Main.INSTANCE.getProcessingHandler().doOCR(imageView.getImage()));
+        outputField.appendText(Singleton.INSTANCE.getProcessingHandler().doOCR(captureView.getImage()));
     }
 
     /**
@@ -123,11 +122,11 @@ public class ConfigCreatorController {
         startCaptureButton.setText(capture ? "Stop Capture" : "Start capture");
         if (capture) {
             clearPolygon();
-            imageView.setImage(null);
-            Main.INSTANCE.getProcessingHandler().start(imageView);
+            captureView.setImage(null);
+            Singleton.INSTANCE.getProcessingHandler().start(captureView);
         } else {
-            Main.INSTANCE.getProcessingHandler().stop();
-            imageView.setImage(null);
+            Singleton.INSTANCE.getProcessingHandler().stop();
+            captureView.setImage(null);
         }
     }
 
@@ -136,7 +135,7 @@ public class ConfigCreatorController {
      */
     @FXML
     public void onTakeImage() {
-        Main.INSTANCE.getProcessingHandler().takeImage(imageView);
+        Singleton.INSTANCE.getProcessingHandler().takeImage(captureView);
     }
 
     /**
@@ -145,7 +144,7 @@ public class ConfigCreatorController {
     @FXML
     public void saveConfig() {
         movePolygons(false);
-        Main.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createAllConfig(s, Main.INSTANCE.getRotationHandler().getCurrentRotations())));
+        Singleton.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Singleton.INSTANCE.getConfigHandler().saveConfig(Singleton.INSTANCE.getConfigHandler().createAllConfig(s, Singleton.INSTANCE.getRotationHandler().getCurrentRotations())));
     }
 
     /**
@@ -153,37 +152,21 @@ public class ConfigCreatorController {
      */
     @FXML
     public void loadConfig() {
-        Main.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.ALL_MODE).ifPresent(response -> {
+        Singleton.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.ALL_MODE).ifPresent(response -> {
             clearPoints();
-            Main.INSTANCE.getConfigHandler().loadConfig(response);
-            for (final Point point : Main.INSTANCE.getVertexHandler().getPoints()) {
+            Singleton.INSTANCE.getConfigHandler().loadConfig(response);
+            for (final Point point : Singleton.INSTANCE.getVertexHandler().getPoints()) {
                 polygon.getPoints().addAll(point.x, point.y);
             }
-            threshold1Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[0]));
-            threshold2Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().getThresholds()[1]));
+            threshold1Field.setText(String.valueOf(Singleton.INSTANCE.getProcessingHandler().getThresholds()[0]));
+            threshold2Field.setText(String.valueOf(Singleton.INSTANCE.getProcessingHandler().getThresholds()[1]));
         });
-    }
-
-    /**
-     * Change current threshold1
-     */
-    @FXML
-    public void changeThreshold1() {
-        threshold1Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1Field.getText()))));
-    }
-
-    /**
-     * Change current threshold2
-     */
-    @FXML
-    public void changeThreshold2() {
-        threshold2Field.setText(String.valueOf(Main.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2Field.getText()))));
     }
 
     @FXML
     public void clearPoints() {
         clearPolygon();
-        Main.INSTANCE.getVertexHandler().clear();
+        Singleton.INSTANCE.getVertexHandler().clear();
         pointIndex = -1;
     }
 
@@ -209,9 +192,11 @@ public class ConfigCreatorController {
      */
     @FXML
     public void refreshImage() {
+        threshold1Field.setText(String.valueOf(Singleton.INSTANCE.getProcessingHandler().setThreshold1(Double.parseDouble(threshold1Field.getText()))));
+        threshold2Field.setText(String.valueOf(Singleton.INSTANCE.getProcessingHandler().setThreshold2(Double.parseDouble(threshold2Field.getText()))));
         clearPolygon();
-        if (imageView == null || imageView.getImage() == null) return;
-        Main.INSTANCE.getProcessingHandler().refreshProcessing(imageView);
+        if (captureView == null || captureView.getImage() == null) return;
+        Singleton.INSTANCE.getProcessingHandler().refreshProcessing(captureView);
     }
 
     /**
@@ -222,7 +207,7 @@ public class ConfigCreatorController {
     private void movePolygons(final boolean deleteOld) {
         if (deleteOld) clearPoints();
         for (int i = 1; i < polygon.getPoints().size(); i += 2) {
-            Main.INSTANCE.getVertexHandler().addPoint(i / 2, new Point(polygon.getPoints().get(i - 1), polygon.getPoints().get(i)));
+            Singleton.INSTANCE.getVertexHandler().addPoint(i / 2, new Point(polygon.getPoints().get(i - 1), polygon.getPoints().get(i)));
         }
     }
 

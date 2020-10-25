@@ -1,17 +1,17 @@
 /*
- * Created by Roman P.  (2020)
- *
- *
+ * Created by Roman P.  (2020.)
+ * created to work on Java version 8
  *
  *
  */
+
 
 package ga.abzzezz.serial;
 
 import com.fazecast.jSerialComm.SerialPort;
 import com.fazecast.jSerialComm.SerialPortEvent;
 import com.fazecast.jSerialComm.SerialPortMessageListener;
-import ga.abzzezz.Main;
+import ga.abzzezz.Singleton;
 import ga.abzzezz.util.MathUtil;
 import ga.abzzezz.util.QuickLog;
 
@@ -83,8 +83,8 @@ public class SerialHandler {
             }
         }
 
-        changeXAxis(Main.INSTANCE.getRotationHandler().getX());
-        changeYAxis(Main.INSTANCE.getRotationHandler().getY());
+        changeXAxis(Singleton.INSTANCE.getRotationHandler().getX());
+        changeYAxis(Singleton.INSTANCE.getRotationHandler().getY());
         return true;
     }
 
@@ -94,12 +94,12 @@ public class SerialHandler {
      * @param amount amount ton change to
      */
     public int changeXAxis(int amount) {
-        if (!getSerialPort().isPresent()) return Main.INSTANCE.getRotationHandler().getX();
+        if (!getSerialPort().isPresent()) return Singleton.INSTANCE.getRotationHandler().getX();
         if (!serialPort.isOpen())
-            return Main.INSTANCE.getRotationHandler().getX();
+            return Singleton.INSTANCE.getRotationHandler().getX();
 
         final int a = changeAmount(amount, 'X');
-        Main.INSTANCE.getRotationHandler().setX(a);
+        Singleton.INSTANCE.getRotationHandler().setX(a);
         return a;
     }
 
@@ -128,11 +128,11 @@ public class SerialHandler {
      * @param amount amount ton change to
      */
     public int changeYAxis(int amount) {
-        if (!getSerialPort().isPresent()) return Main.INSTANCE.getRotationHandler().getX();
+        if (!getSerialPort().isPresent()) return Singleton.INSTANCE.getRotationHandler().getX();
         if (!serialPort.isOpen())
-            return Main.INSTANCE.getRotationHandler().getY();
+            return Singleton.INSTANCE.getRotationHandler().getY();
         final int a = changeAmount(amount, 'Y');
-        Main.INSTANCE.getRotationHandler().setY(a);
+        Singleton.INSTANCE.getRotationHandler().setY(a);
         return a;
     }
 

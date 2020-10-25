@@ -1,15 +1,15 @@
 /*
- * Created by Roman P.  (2020)
- *
- *
+ * Created by Roman P.  (2020.)
+ * created to work on Java version 8
  *
  *
  */
 
+
 package ga.abzzezz.controllers;
 
 import com.fazecast.jSerialComm.SerialPort;
-import ga.abzzezz.Main;
+import ga.abzzezz.Singleton;
 import ga.abzzezz.config.ConfigHandler;
 import ga.abzzezz.util.QuickLog;
 import ga.abzzezz.util.SettingsHolder;
@@ -19,8 +19,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+
+import java.awt.*;
+import java.io.IOException;
 
 /**
  * Standard javafx controller class.
@@ -53,12 +58,12 @@ public class MainController {
     @FXML
     public void initialize() {
         portComboBox.getItems().addAll(SerialPort.getCommPorts());
-        Main.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> setEnabled(serialPort.isOpen()));
+        Singleton.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> setEnabled(serialPort.isOpen()));
         /* UI Components */
-        xAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getX());
-        yAxisSlider.setValue(Main.INSTANCE.getRotationHandler().getY());
+        xAxisSlider.setValue(Singleton.INSTANCE.getRotationHandler().getX());
+        yAxisSlider.setValue(Singleton.INSTANCE.getRotationHandler().getY());
 
-        Main.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> portComboBox.setValue(serialPort));
+        Singleton.INSTANCE.getSerialHandler().getSerialPort().ifPresent(serialPort -> portComboBox.setValue(serialPort));
 
         logResultsToFile.setSelected(SettingsHolder.logResultsToFile);
     }
@@ -68,7 +73,7 @@ public class MainController {
      */
     @FXML
     public void onPortSelected() {
-        setEnabled(Main.INSTANCE.getSerialHandler().setPort(portComboBox.getValue()));
+        setEnabled(Singleton.INSTANCE.getSerialHandler().setPort(portComboBox.getValue()));
     }
 
     /**
@@ -86,12 +91,12 @@ public class MainController {
 
     @FXML
     public void saveConfig(final ActionEvent event) {
-        Main.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Main.INSTANCE.getConfigHandler().saveConfig(Main.INSTANCE.getConfigHandler().createServoConfig(s, Main.INSTANCE.getRotationHandler().getCurrentRotations())));
+        Singleton.INSTANCE.getConfigHandler().showDialogConfigName().ifPresent(s -> Singleton.INSTANCE.getConfigHandler().saveConfig(Singleton.INSTANCE.getConfigHandler().createServoConfig(s, Singleton.INSTANCE.getRotationHandler().getCurrentRotations())));
     }
 
     @FXML
     public void loadConfig(final ActionEvent event) {
-        Main.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.SERVO_MODE).ifPresent(response -> Main.INSTANCE.getConfigHandler().loadConfig(response));
+        Singleton.INSTANCE.getConfigHandler().showAvailableConfigs(config -> config.getMode() == ConfigHandler.SERVO_MODE).ifPresent(response -> Singleton.INSTANCE.getConfigHandler().loadConfig(response));
     }
 
     /**
@@ -100,7 +105,7 @@ public class MainController {
     @FXML
 
     public void onYAxisChanged() {
-        final int value = Main.INSTANCE.getSerialHandler().changeYAxis((int) yAxisSlider.getValue());
+        final int value = Singleton.INSTANCE.getSerialHandler().changeYAxis((int) yAxisSlider.getValue());
         yAxisField.setText(String.valueOf(value));
     }
 
@@ -109,7 +114,7 @@ public class MainController {
      */
     @FXML
     public void onXAxisChanged() {
-        final int value = Main.INSTANCE.getSerialHandler().changeXAxis((int) xAxisSlider.getValue());
+        final int value = Singleton.INSTANCE.getSerialHandler().changeXAxis((int) xAxisSlider.getValue());
         xAxisField.setText(String.valueOf(value));
     }
 
@@ -118,7 +123,7 @@ public class MainController {
      */
     @FXML
     public void changeXAxis() {
-        final int value = Main.INSTANCE.getSerialHandler().changeXAxis(Integer.parseInt(xAxisField.getText()));
+        final int value = Singleton.INSTANCE.getSerialHandler().changeXAxis(Integer.parseInt(xAxisField.getText()));
         xAxisSlider.setValue(value);
     }
 
@@ -127,7 +132,7 @@ public class MainController {
      */
     @FXML
     public void changeYAxis() {
-        final int value = Main.INSTANCE.getSerialHandler().changeYAxis(Integer.parseInt(yAxisField.getText()));
+        final int value = Singleton.INSTANCE.getSerialHandler().changeYAxis(Integer.parseInt(yAxisField.getText()));
         yAxisSlider.setValue(value);
     }
 
@@ -154,6 +159,15 @@ public class MainController {
 
     @FXML
     public void setCamIndex() {
-        Main.INSTANCE.getProcessingHandler().setCamIndex(Integer.parseInt(camIndexField.getText()));
+        Singleton.INSTANCE.getProcessingHandler().setCamIndex(Integer.parseInt(camIndexField.getText()));
+    }
+
+    @FXML
+    public void openLogs() {
+        try {
+            Desktop.getDesktop().open(Singleton.INSTANCE.getProcessedFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

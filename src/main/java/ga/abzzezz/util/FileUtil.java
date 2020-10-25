@@ -1,10 +1,10 @@
 /*
- * Created by Roman P.  (2020)
- *
- *
+ * Created by Roman P.  (2020.)
+ * created to work on Java version 8
  *
  *
  */
+
 
 package ga.abzzezz.util;
 
